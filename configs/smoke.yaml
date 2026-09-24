@@ -1,0 +1,31 @@
+# Deep-merge this into the referenced profile; unknown keys must be rejected.
+extends: prototype.yaml
+profile: smoke
+run_dir: runs/smoke
+resources:
+  workspace_cap_gib: 12
+  max_repair_attempts: 1
+  max_total_optimizer_steps: 1600
+render:
+  width: 256
+  height: 192
+  samples: 32
+data:
+  identity_counts: {train: 8, validation: 4, test: 4}
+  still_pairs: {train: 64, validation: 16, test: 16}
+  clips: {train: 4, validation: 2, test: 2}
+  frames_per_clip: 8
+  full_head_demo_cases: 2
+  demo_frames_per_case: 8
+  demo_width: 640
+  demo_height: 360
+training:
+  warmup_steps: 20
+  guard: {steps: 200, microbatch: 2, effective_batch: 4}
+  image: {steps: 400, microbatch: 2, effective_batch: 4}
+  temporal: {steps: 400, microbatch: 1, effective_batch: 4}
+  checkpoint_every_steps: 100
+  validation_every_steps: 100
+validation:
+  smoke_only: true
+# Smoke exercises execution; it cannot count as the delivered quality prototype.

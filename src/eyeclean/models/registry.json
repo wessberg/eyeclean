@@ -1,0 +1,25 @@
+{
+ "schema": "eyeclean.models/1",
+ "default": "eyeclean-r48",
+ "models": {
+  "eyeclean-r48": {
+   "file": "eyeclean-r48.safetensors",
+   "sha256": "1505f69df6b57bb51a9031294dbe410d51a178984f22868e2010588558cced1f",
+   "bytes": 238512276,
+   "restore_mode": "single",
+   "promoted": "2026-09-24",
+   "license": "MIT",
+   "url": null,
+   "description": "EyeGuard + reflection-presence classifier + EyeRestoreTX (57.5M), invariance fine-tuned, with a 0.5 px softened restorer input; see MODEL_CARD.md",
+   "input_note": "any input colour EyeClean supports; tested on 1080p Rec.709 video and linear Rec.709 EXR"
+  },
+  "best_single_r48": {
+   "file": "best_single_r48.safetensors",
+   "sha256": "d745caf3609c2f4845073aa43737826946aa7f8b4a4510202fe09332bb6de6bd",
+   "restore_mode": "single",
+   "promoted": "2026-09-24",
+   "distributed": false,
+   "description": "the development bundle eyeclean-r48 was made from: the same tensors plus an unused five-frame CNN slot and a development manifest; identical output"
+  }
+ }
+}

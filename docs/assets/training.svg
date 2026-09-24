@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 430" width="1100" height="430" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif">
+  <title>How EyeClean is trained: synthetic pairs, a restorer, an invariance fine-tune, and pre-registered real-footage judgement</title>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#51606d"/></marker>
+    <style>.b{fill:#fff;stroke:#9fb3c4;stroke-width:1.5}.g{fill:#eaf4fb;stroke:#2f6f9f;stroke-width:1.6}.n{fill:#fff4e0;stroke:#d98e04;stroke-width:1.6}.j{fill:#f3ecfb;stroke:#7a4fb0;stroke-width:1.6}.t{font-size:14px;fill:#24323d;font-weight:600}.s{font-size:11.5px;fill:#566673}.h{font-size:15px;fill:#2f6f9f;font-weight:700}.l{stroke:#51606d;stroke-width:1.6;fill:none;marker-end:url(#a)}</style>
+  </defs>
+  <rect width="1100" height="430" rx="18" fill="#f7f9fb"/>
+  <text x="30" y="40" class="h">1 · synthetic data (Blender 5.2 Cycles, headless)</text>
+  <rect x="30" y="56" width="230" height="96" rx="10" class="g"/>
+  <text x="145" y="82" text-anchor="middle" class="t">procedural heads</text>
+  <text x="145" y="100" text-anchor="middle" class="s">MPFB 2 / MakeHuman (CC0 assets),</text>
+  <text x="145" y="114" text-anchor="middle" class="s">eyelids, blinks, gaze, iris textures,</text>
+  <text x="145" y="128" text-anchor="middle" class="s">softboxes, rings, windows, practicals</text>
+  <path d="M260 104H292" class="l"/>
+  <rect x="296" y="56" width="230" height="96" rx="10" class="g"/>
+  <text x="411" y="82" text-anchor="middle" class="t">paired renders</text>
+  <text x="411" y="100" text-anchor="middle" class="s">the same frame WITH and WITHOUT the</text>
+  <text x="411" y="114" text-anchor="middle" class="s">designated reflection + exact masks;</text>
+  <text x="411" y="128" text-anchor="middle" class="s">render QC + a contact sheet, always</text>
+  <path d="M526 104H558" class="l"/>
+  <rect x="562" y="56" width="230" height="96" rx="10" class="g"/>
+  <text x="677" y="82" text-anchor="middle" class="t">camera simulation</text>
+  <text x="677" y="100" text-anchor="middle" class="s">sensor noise, codec, sub-pixel grid,</text>
+  <text x="677" y="114" text-anchor="middle" class="s">exposure; highlights that do not clip</text>
+  <text x="677" y="128" text-anchor="middle" class="s">(real catchlights rarely do)</text>
+
+  <text x="30" y="196" class="h">2 · models</text>
+  <path d="M677 152V176H145V212" class="l"/>
+  <rect x="30" y="216" width="230" height="84" rx="10" class="n"/>
+  <text x="145" y="242" text-anchor="middle" class="t">EyeGuard (1.8M)</text>
+  <text x="145" y="260" text-anchor="middle" class="s">anatomy + reflection masks,</text>
+  <text x="145" y="274" text-anchor="middle" class="s">open-eye and presence heads</text>
+  <path d="M260 258H292" class="l"/>
+  <rect x="296" y="216" width="230" height="84" rx="10" class="n"/>
+  <text x="411" y="242" text-anchor="middle" class="t">EyeRestoreTX (57.5M)</text>
+  <text x="411" y="260" text-anchor="middle" class="s">residual fill + support/conf heads,</text>
+  <text x="411" y="274" text-anchor="middle" class="s">CG + iris-bank mix</text>
+  <path d="M526 258H558" class="l"/>
+  <rect x="562" y="216" width="230" height="84" rx="10" class="n"/>
+  <text x="677" y="242" text-anchor="middle" class="t">invariance fine-tune</text>
+  <text x="677" y="260" text-anchor="middle" class="s">two-frame pseudo-clips: penalise how</text>
+  <text x="677" y="274" text-anchor="middle" class="s">much the ERROR changes frame to frame</text>
+  <path d="M792 258H824" class="l"/>
+  <rect x="828" y="216" width="242" height="84" rx="10" class="b"/>
+  <text x="949" y="242" text-anchor="middle" class="t">bundle</text>
+  <text x="949" y="260" text-anchor="middle" class="s">one .safetensors: weights, gate,</text>
+  <text x="949" y="274" text-anchor="middle" class="s">calibration, provenance manifest</text>
+
+  <text x="30" y="344" class="h">3 · judgement</text>
+  <rect x="30" y="358" width="1040" height="54" rx="10" class="j"/>
+  <text x="550" y="381" text-anchor="middle" class="t">pre-registered rounds: protocol frozen before any run · budget-matched controls · rulers that prove the scorer · held-out CG</text>
+  <text x="550" y="399" text-anchor="middle" class="s">real-footage metrics against a hand-made reference · a human looks at every candidate at 12x before anything is promoted</text>
+</svg>

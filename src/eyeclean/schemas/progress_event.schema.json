@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "eyeclean.progress/1",
+  "title": "EyeClean progress event (eyeclean.progress/1)",
+  "description": "One JSON object per line on stdout with `eyeclean process --progress jsonl`, and in --progress-file. A successful run ends with `done`, a failed or cancelled one with `error`. New event kinds and fields may be added within version 1; consumers must ignore what they do not know.",
+  "type": "object",
+  "required": ["schema", "event"],
+  "properties": {
+    "schema": {"const": "eyeclean.progress/1"},
+    "event": {"enum": ["start", "stage", "frame", "warning", "done", "error"]},
+    "t": {"type": "number", "description": "seconds since the run started"}
+  },
+  "allOf": [
+    {"if": {"properties": {"event": {"const": "start"}}},
+     "then": {"required": ["input", "output", "model", "eyeclean_version"],
+              "properties": {"frames_expected": {"type": ["integer", "null"], "description": "null for video files (unknown until decoded)"}}}},
+    {"if": {"properties": {"event": {"const": "stage"}}},
+     "then": {"required": ["stage"], "properties": {"stage": {"enum": ["analysis", "render", "finalize"]}}}},
+    {"if": {"properties": {"event": {"const": "frame"}}},
+     "then": {"required": ["stage", "frame", "done"],
+              "properties": {"stage": {"enum": ["analysis", "render"]}, "frame": {"type": "integer"}, "done": {"type": "integer"},
+                             "total": {"type": ["integer", "null"]}, "eyes_repaired": {"type": "integer"}, "eyes_tracked": {"type": "integer"}}}},
+    {"if": {"properties": {"event": {"const": "warning"}}}, "then": {"required": ["message"]}},
+    {"if": {"properties": {"event": {"const": "done"}}}, "then": {"required": ["summary"]}},
+    {"if": {"properties": {"event": {"const": "error"}}},
+     "then": {"required": ["code", "kind", "message"],
+              "properties": {"code": {"enum": [2, 3, 4, 5, 6, 7], "description": "the process exit code"}}}}
+  ]
+}

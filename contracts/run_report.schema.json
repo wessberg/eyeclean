@@ -1,0 +1,957 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EyeClean implementation run report",
+  "description": "Structure only. verify-run must validate evidence, hashes and frozen acceptance thresholds.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "report_kind",
+    "run_id",
+    "profile",
+    "generated_at",
+    "spec_revision",
+    "acceptance_sha256",
+    "engineering_status",
+    "synthetic_quality_status",
+    "real_quality_status",
+    "hardware",
+    "versions",
+    "stages",
+    "checks",
+    "metrics",
+    "preservation",
+    "training",
+    "artifacts",
+    "warnings",
+    "failures",
+    "own_footage_cli_tested"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "report_kind": {
+      "const": "implementation_run"
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile": {
+      "enum": [
+        "smoke",
+        "prototype",
+        "quality",
+        "custom"
+      ]
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "spec_revision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "acceptance_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "engineering_status": {
+      "enum": [
+        "passed",
+        "failed",
+        "blocked",
+        "not_run"
+      ]
+    },
+    "synthetic_quality_status": {
+      "enum": [
+        "passed",
+        "failed",
+        "blocked",
+        "not_run",
+        "not_evaluated"
+      ]
+    },
+    "real_quality_status": {
+      "enum": [
+        "not_tested",
+        "review_required",
+        "failed",
+        "passed_with_documented_review"
+      ]
+    },
+    "hardware": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "os",
+        "gpu_name",
+        "gpu_total_gib",
+        "driver_version",
+        "cuda_available"
+      ],
+      "properties": {
+        "os": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "gpu_name": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "gpu_total_gib": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "driver_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "cuda_available": {
+          "type": "boolean"
+        }
+      }
+    },
+    "versions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": [
+          "string",
+          "null"
+        ]
+      }
+    },
+    "stages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/stage"
+      }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/check"
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/metric"
+      }
+    },
+    "preservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reference_definition",
+        "source_files_modified",
+        "outside_support_changed_bits",
+        "strength_zero_changed_bits",
+        "empty_support_changed_bits",
+        "alpha_changed_bits",
+        "evidence"
+      ],
+      "properties": {
+        "reference_definition": {
+          "type": "string"
+        },
+        "source_files_modified": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "outside_support_changed_bits": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "strength_zero_changed_bits": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "empty_support_changed_bits": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "alpha_changed_bits": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "training": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "actually_executed",
+        "optimizer_steps",
+        "checkpoint_path",
+        "checkpoint_sha256",
+        "parameter_count",
+        "peak_gpu_gib",
+        "data_manifest_path",
+        "split_integrity_status"
+      ],
+      "properties": {
+        "actually_executed": {
+          "type": "boolean"
+        },
+        "optimizer_steps": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "checkpoint_path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "checkpoint_sha256": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "parameter_count": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "peak_gpu_gib": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "data_manifest_path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "split_integrity_status": {
+          "enum": [
+            "passed",
+            "failed",
+            "blocked",
+            "not_run"
+          ]
+        }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/artifact"
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "failures": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "own_footage_cli_tested": {
+      "type": "boolean"
+    }
+  },
+  "$defs": {
+    "stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "status",
+        "commands",
+        "evidence",
+        "notes"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "blocked",
+            "not_run"
+          ]
+        },
+        "commands": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "status",
+        "evidence",
+        "reason"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "failed",
+            "blocked",
+            "not_run"
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "reason": {
+          "type": "string"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "passed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "evidence": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "unit",
+        "split",
+        "bucket",
+        "basis",
+        "reason_unavailable",
+        "evidence"
+      ],
+      "properties": {
+        "value": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "unit": {
+          "type": "string"
+        },
+        "split": {
+          "type": "string"
+        },
+        "bucket": {
+          "type": "string"
+        },
+        "basis": {
+          "type": "string"
+        },
+        "reason_unavailable": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "value": {
+                "type": "null"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reason_unavailable": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "evidence": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "kind",
+        "sha256",
+        "actually_created",
+        "provenance"
+      ],
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "actually_created": {
+          "const": true
+        },
+        "provenance": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "engineering_status": {
+            "const": "passed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "hardware": {
+            "properties": {
+              "cuda_available": {
+                "const": true
+              }
+            }
+          },
+          "own_footage_cli_tested": {
+            "const": true
+          },
+          "training": {
+            "properties": {
+              "actually_executed": {
+                "const": true
+              },
+              "optimizer_steps": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "checkpoint_path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "checkpoint_sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              }
+            }
+          },
+          "preservation": {
+            "properties": {
+              "source_files_modified": {
+                "const": 0
+              },
+              "outside_support_changed_bits": {
+                "const": 0
+              },
+              "strength_zero_changed_bits": {
+                "const": 0
+              },
+              "empty_support_changed_bits": {
+                "const": 0
+              },
+              "alpha_changed_bits": {
+                "const": 0
+              }
+            }
+          },
+          "checks": {
+            "allOf": [
+              {
+                "contains": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "status"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "cuda_blackwell_kernel"
+                    },
+                    "status": {
+                      "const": "passed"
+                    }
+                  }
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "status"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "optix_render_device"
+                    },
+                    "status": {
+                      "const": "passed"
+                    }
+                  }
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "status"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "strict_gpu_hot_path_audit"
+                    },
+                    "status": {
+                      "const": "passed"
+                    }
+                  }
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "status"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "nvdec_nvenc_supported_profile_roundtrip"
+                    },
+                    "status": {
+                      "const": "passed"
+                    }
+                  }
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "status"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "cuda_color_reference_tests"
+                    },
+                    "status": {
+                      "const": "passed"
+                    }
+                  }
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "status"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "float_exr_roundtrip"
+                    },
+                    "status": {
+                      "const": "passed"
+                    }
+                  }
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "status"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "original_source_hash_unchanged"
+                    },
+                    "status": {
+                      "const": "passed"
+                    }
+                  }
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "status"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "zero_changed_bits_outside_final_support"
+                    },
+                    "status": {
+                      "const": "passed"
+                    }
+                  }
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "status"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "zero_changed_bits_strength_zero"
+                    },
+                    "status": {
+                      "const": "passed"
+                    }
+                  }
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "status"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "zero_changed_bits_empty_support"
+                    },
+                    "status": {
+                      "const": "passed"
+                    }
+                  }
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "status"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "no_eye_passthrough"
+                    },
+                    "status": {
+                      "const": "passed"
+                    }
+                  }
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "status"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "source_alpha_unchanged"
+                    },
+                    "status": {
+                      "const": "passed"
+                    }
+                  }
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "status"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "final_gate_after_inverse_warp"
+                    },
+                    "status": {
+                      "const": "passed"
+                    }
+                  }
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "status"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "independent_full_frame_detection"
+                    },
+                    "status": {
+                      "const": "passed"
+                    }
+                  }
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "status"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "no_clean_target_access_during_prediction"
+                    },
+                    "status": {
+                      "const": "passed"
+                    }
+                  }
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "status"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "fixed_per_shot_canonical_state"
+                    },
+                    "status": {
+                      "const": "passed"
+                    }
+                  }
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "status"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "blink_cut_identity_resets"
+                    },
+                    "status": {
+                      "const": "passed"
+                    }
+                  }
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "status"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "bounded_memory_long_stream"
+                    },
+                    "status": {
+                      "const": "passed"
+                    }
+                  }
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "status"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "timestamp_and_frame_count_preservation"
+                    },
+                    "status": {
+                      "const": "passed"
+                    }
+                  }
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "status"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "reproducible_resume_and_disjoint_splits"
+                    },
+                    "status": {
+                      "const": "passed"
+                    }
+                  }
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "status"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "actual_trained_checkpoint_gallery"
+                    },
+                    "status": {
+                      "const": "passed"
+                    }
+                  }
+                }
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "required": [
+                    "name",
+                    "status"
+                  ],
+                  "properties": {
+                    "name": {
+                      "const": "tested_own_footage_cli"
+                    },
+                    "status": {
+                      "const": "passed"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "profile": {
+            "const": "smoke"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "synthetic_quality_status": {
+            "not": {
+              "const": "passed"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,110 @@
+# Implementation contract: the agent must implement and validate every key.
+schema_version: '1.0'
+profile: prototype
+run_dir: runs/prototype
+seed: 20260910
+gpu:
+  policy: strict
+  device_index: 0
+  target_working_gib: 13.0
+  reserve_free_gib: 2.0
+  cpu_image_fallback: false
+  sequential_render_train: true
+  network_precision: bf16
+  reference_precision: float32
+  compile: auto_cuda_only
+resources:
+  workspace_cap_gib: 64
+  min_free_disk_gib: 12
+  max_repair_attempts: 2
+  max_total_optimizer_steps: 24000
+  allow_paid_services: false
+  allow_uploads: false
+render:
+  engine: CYCLES
+  device: OPTIX
+  width: 512
+  height: 384
+  samples: 128
+  adaptive_sampling: true
+  denoising: false
+  training_cache_dtype: float16
+  diagnostic_dtype: float32
+  paired_target: camera_ocular_reflection_closure_off
+  preserve_refraction: true
+  preserve_transmission_weight: true
+  save_representative_blend_scenes: true
+  external_assets: verified_public_ungated_only
+data:
+  identity_counts: {train: 128, validation: 32, test: 32}
+  still_pairs: {train: 2048, validation: 128, test: 128}
+  clips: {train: 64, validation: 8, test: 8}
+  frames_per_clip: 16
+  full_head_demo_cases: 12
+  demo_frames_per_case: 24
+  demo_width: 1920
+  demo_height: 1080
+  negative_fraction_min: 0.20
+  saturated_fraction_min: 0.25
+  disjoint_identities_textures_scenes: true
+  heldout_light_family: true
+  heldout_material_family: true
+  augmentation_device: cuda
+  same_pair_noise_realization: true
+model:
+  baseline: eyeguard_plus_temporal_naf_style
+  widths: [32, 64, 128, 256]
+  encoder_blocks: [2, 2, 4, 6]
+  crop_size: 256
+  temporal_frames: 5
+  temporal_fusion: local_sdpa_or_temporal_convolution
+  max_parameters_target: 40000000
+  canonical_prior: fixed_per_shot_cuda_procedural_atlas
+  require_pretrained_reflection_weights: false
+  use_external_flow: false
+training:
+  optimizer: adamw
+  learning_rate: 0.0002
+  weight_decay: 0.0001
+  warmup_steps: 500
+  schedule: cosine
+  gradient_clip: 1.0
+  ema_decay: 0.999
+  activation_checkpointing: true
+  guard: {steps: 4000, microbatch: 4, effective_batch: 16}
+  image: {steps: 6000, microbatch: 4, effective_batch: 16}
+  temporal: {steps: 6000, microbatch: 1, effective_batch: 8}
+  checkpoint_every_steps: 500
+  validation_every_steps: 500
+  resume: auto
+inference:
+  default_mode: conservative
+  synthesis_requires_explicit_flag: true
+  max_faces: 4
+  minimum_iris_diameter_pixels: 8
+  frame_buffer_count: 7
+  canonical_analysis_pass: true
+  hard_gate_after_inverse_warp: true
+  preserve_source_alpha: true
+  fail_closed_on_uncertain_anatomy: true
+color:
+  working_color: linear-acescg
+  input_color: require_metadata_or_explicit
+  input_range: require_metadata_or_explicit
+  model_mapping: invertible_exposure_asinh
+output:
+  authoritative: cropped_signed_float_exr
+  exr_compression: none
+  preview_encoder: nvenc
+  preview_codec: auto_supported
+  include_ground_truth_in_demo_only: true
+  preserve_source_hash: true
+  export_full_frame_master_by_default: false
+validation:
+  contract: contracts/acceptance.yaml
+  report_schema: contracts/run_report.schema.json
+  require_gpu_trace: true
+  require_independent_full_frame_detection: true
+  run_4k_preservation_fixture: true
+  user_footage_sample_max_frames: 240
+  real_quality_without_footage: not_tested

@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" width="960" height="360" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif">
+  <title>EyeClean: remove the catchlight, keep every other pixel</title>
+  <defs>
+    <radialGradient id="iris" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3b2a1c"/>
+      <stop offset="45%" stop-color="#7a5431"/>
+      <stop offset="80%" stop-color="#9a6b3e"/>
+      <stop offset="100%" stop-color="#4a331f"/>
+    </radialGradient>
+    <radialGradient id="sclera" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#f4eee8"/>
+      <stop offset="100%" stop-color="#d9c9bd"/>
+    </radialGradient>
+    <clipPath id="eyeL"><path d="M60 180 Q190 70 320 180 Q190 290 60 180 Z"/></clipPath>
+    <clipPath id="eyeR"><path d="M640 180 Q770 70 900 180 Q770 290 640 180 Z"/></clipPath>
+    <pattern id="grid" width="12" height="12" patternUnits="userSpaceOnUse">
+      <path d="M12 0H0V12" fill="none" stroke="#8aa3b8" stroke-opacity="0.35" stroke-width="1"/>
+    </pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0 0L10 5L0 10Z" fill="#2f6f9f"/>
+    </marker>
+  </defs>
+  <rect width="960" height="360" rx="18" fill="#f7f9fb"/>
+  <!-- source eye -->
+  <g clip-path="url(#eyeL)">
+    <rect x="40" y="60" width="300" height="240" fill="url(#sclera)"/>
+    <circle cx="190" cy="180" r="74" fill="url(#iris)"/>
+    <g stroke="#5b3d22" stroke-opacity="0.45" stroke-width="1.2">
+      <path d="M190 106V130M190 230V254M116 180H140M240 180H264M138 128L155 145M225 215L242 232M242 128L225 145M155 215L138 232"/>
+    </g>
+    <circle cx="190" cy="180" r="30" fill="#0d0a08"/>
+    <rect x="168" y="138" width="26" height="20" rx="3" fill="#ffffff"/>
+    <rect x="170" y="140" width="22" height="16" rx="2" fill="#fbfdff" stroke="#dde8f2"/>
+  </g>
+  <path d="M60 180 Q190 70 320 180 Q190 290 60 180 Z" fill="none" stroke="#6b4b3a" stroke-width="3"/>
+  <text x="190" y="322" text-anchor="middle" font-size="17" fill="#33414d" font-weight="600">source frame</text>
+  <text x="190" y="342" text-anchor="middle" font-size="13" fill="#5a6b78">studio softbox reflected in the cornea</text>
+  <!-- engine -->
+  <line x1="340" y1="180" x2="405" y2="180" stroke="#2f6f9f" stroke-width="3" marker-end="url(#arrow)"/>
+  <rect x="412" y="118" width="136" height="124" rx="14" fill="#2f6f9f"/>
+  <text x="480" y="168" text-anchor="middle" font-size="22" font-weight="700" fill="#ffffff">EyeClean</text>
+  <text x="480" y="192" text-anchor="middle" font-size="12.5" fill="#d9ecfa">track · segment ·</text>
+  <text x="480" y="208" text-anchor="middle" font-size="12.5" fill="#d9ecfa">restore · gate</text>
+  <line x1="552" y1="180" x2="620" y2="180" stroke="#2f6f9f" stroke-width="3" marker-end="url(#arrow)"/>
+  <!-- result eye: grid = untouched pixels, amber outline = edited support -->
+  <g clip-path="url(#eyeR)">
+    <rect x="620" y="60" width="300" height="240" fill="url(#sclera)"/>
+    <circle cx="770" cy="180" r="74" fill="url(#iris)"/>
+    <g stroke="#5b3d22" stroke-opacity="0.45" stroke-width="1.2">
+      <path d="M770 106V130M770 230V254M696 180H720M820 180H844M718 128L735 145M805 215L822 232M822 128L805 145M735 215L718 232"/>
+    </g>
+    <circle cx="770" cy="180" r="30" fill="#0d0a08"/>
+    <rect x="620" y="60" width="300" height="240" fill="url(#grid)"/>
+  </g>
+  <path d="M640 180 Q770 70 900 180 Q770 290 640 180 Z" fill="none" stroke="#6b4b3a" stroke-width="3"/>
+  <rect x="744" y="134" width="34" height="28" rx="6" fill="#f6b73c" fill-opacity="0.18" stroke="#d98e04" stroke-width="2.2" stroke-dasharray="5 3"/>
+  <text x="770" y="322" text-anchor="middle" font-size="17" fill="#33414d" font-weight="600">result</text>
+  <text x="770" y="342" text-anchor="middle" font-size="12.5" fill="#5a6b78">only the dashed support changed; the rest is bit-identical</text>
+  <text x="480" y="44" text-anchor="middle" font-size="15" fill="#5a6b78">schematic, not a real frame</text>
+</svg>

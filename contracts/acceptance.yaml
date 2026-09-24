@@ -1,0 +1,56 @@
+schema_version: '1.0'
+# These are proposed build gates, not measured or literature-established results.
+# Freeze a hash before training. Never lower thresholds to manufacture success.
+engineering:
+  mandatory_pass_checks:
+    - cuda_blackwell_kernel
+    - optix_render_device
+    - strict_gpu_hot_path_audit
+    - nvdec_nvenc_supported_profile_roundtrip
+    - cuda_color_reference_tests
+    - float_exr_roundtrip
+    - original_source_hash_unchanged
+    - zero_changed_bits_outside_final_support
+    - zero_changed_bits_strength_zero
+    - zero_changed_bits_empty_support
+    - no_eye_passthrough
+    - source_alpha_unchanged
+    - final_gate_after_inverse_warp
+    - independent_full_frame_detection
+    - no_clean_target_access_during_prediction
+    - fixed_per_shot_canonical_state
+    - blink_cut_identity_resets
+    - bounded_memory_long_stream
+    - timestamp_and_frame_count_preservation
+    - reproducible_resume_and_disjoint_splits
+    - actual_trained_checkpoint_gallery
+    - tested_own_footage_cli
+  outside_support_changed_bits_max: 0
+  changed_source_files_max: 0
+  preservation_fixture_dimensions: [3840, 2160]
+  cpu_numerical_image_fallbacks_max: 0
+synthetic_quality:
+  # Evaluate on frozen identity/scene/material/light holdouts, never training data.
+  recoverable_masked_mae_reduction_min: 0.20
+  recoverable_reflection_coverage_min: 0.30
+  controlled_no_reflection_changed_pixels_max: 0
+  controlled_off_eye_changed_pixels_max: 0
+  pupil_metric_min_iris_diameter_pixels: 24
+  pupil_area_relative_error_median_max: 0.05
+  pupil_area_relative_error_p95_max: 0.15
+  temporal_error_ratio_vs_single_frame_max: 0.95
+  compare_against: [uncorrected_input, trained_single_frame]
+  report_by_bucket: true
+  report_abstention_and_synthesis_coverage: true
+  unavailable_metrics_are_null_not_zero: true
+  quality_gate_failure_must_remain_visible: true
+  notes:
+    - Pupil geometry requires a separately validated evaluator, not the model's own claimed mask.
+    - Temporal error compares prediction error to ground truth over valid correspondences.
+    - Outer-support exactness is separate from semantic mask accuracy.
+    - Smoke cannot satisfy the final synthetic-quality delivery gate.
+real_quality:
+  allowed_status: [not_tested, review_required, failed, passed_with_documented_review]
+  no_ground_truth_psnr_without_real_target: true
+  no_biometric_identity_recovery_claim_without_evidence: true
+  no_uploaded_footage: true

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "eyeclean.process/1/report",
+  "title": "EyeClean run report: RUN_REPORT.json (eyeclean.process/1)",
+  "description": "Written last, only by a completed run: its presence marks a complete output directory. The keys below are the stable contract; the report also carries diagnostic sections (gpu_audit, memory, timing_s, profiles, static_scan) that may change.",
+  "type": "object",
+  "required": ["schema", "eyeclean_version", "report_kind", "generated_at", "input", "output", "frames", "model", "interpretation",
+               "eye_status_counts", "preservation", "outputs", "warnings", "seconds"],
+  "properties": {
+    "schema": {"const": "eyeclean.process/1"},
+    "eyeclean_version": {"type": "string"},
+    "report_kind": {"const": "process_run"},
+    "generated_at": {"type": "string"},
+    "input": {"type": "string"}, "output": {"type": "string"},
+    "frames": {"type": "integer"},
+    "model": {"type": "object", "required": ["path", "sha256", "restore_mode"],
+              "properties": {"name": {"type": ["string", "null"]}, "path": {"type": "string"}, "sha256": {"type": "string"},
+                             "restore_mode": {"enum": ["temporal", "single"]}, "restore_mode_source": {"type": "string"}}},
+    "job": {"type": ["object", "null"], "description": "the resolved job (re-runnable) and the job file, if any"},
+    "interpretation": {"type": "object", "required": ["input_color", "working_color"]},
+    "fps_exact": {"type": ["string", "null"]},
+    "exr_compression": {"enum": ["none", "zips", "zip"]},
+    "eye_status_counts": {"type": "object", "additionalProperties": {"type": "integer"}},
+    "preservation": {"type": "object", "required": ["source_files_modified", "frames_verified"],
+                     "properties": {"source_files_modified": {"const": 0},
+                                    "outside_support_changed_bits": {"type": ["integer", "null"]},
+                                    "frames_verified": {"type": "integer"}}},
+    "coverage": {"type": "object"},
+    "outputs": {"type": "object", "required": ["index"]},
+    "warnings": {"type": "array", "items": {"type": "string"}},
+    "seconds": {"type": "number"}
+  }
+}

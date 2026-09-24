@@ -1,0 +1,84 @@
+# v2 data experiment (custom profile). Targeted CG-to-real fixes found while reviewing real footage
+# (development record): camera knee / codec / exposure statistics, dominant key softboxes with big
+# unclipped catchlights, relaxed lids, and balanced demographics (child to 90, female/male, skin
+# matched to age and ancestry, no makeup/tattoo textures). Acceptance thresholds are unchanged.
+extends: prototype.yaml
+profile: custom
+run_dir: runs/v2
+resources:
+  # 160 -> 320 for Round 2: the 26,112 portrait stills add ~168 GiB to the 57 GiB already cached
+  # (674 GiB free at the time).  Compute/storage budget only; no acceptance threshold changes.
+  workspace_cap_gib: 320
+  min_free_disk_gib: 16
+  # raised from 40000: EyeGuard at 6000 steps (14 min at 0.139 s/step) was still improving linearly
+  # - reflection IoU 0.281 and climbing - and measured as the bottleneck for gate coverage, so the
+  # guard gets 30000 steps and the restorer is retrained on its masks.  Compute budget only; every
+  # acceptance threshold in contracts/acceptance.yaml is unchanged.
+  # Round 3: 105,000 of the 120,000 declared here were spent by the end of Round 2's retrain
+  # (guard 6k+30k, restorer 16k+40k, temporal 1k, presence 6k+6k), leaving too little for the
+  # 30,000-step guard candidate on the full 39,333-shot pool - the promoted guard is the only
+  # model that never saw the portrait population (it trained before that render existed).
+  # Raised to 150,000 for that candidate plus headroom.  Compute budget only; every acceptance
+  # threshold in contracts/acceptance.yaml is unchanged.  A further raise for retraining the
+  # downstream models on a promoted guard (+46,000) is deliberately NOT taken here: it waits on
+  # the IoU comparison against the incumbent.
+  # Raised for Round 21 (transformer restorer).  278,923 updates are already spent against the
+  # previous 400,000 authorisation; this run budgets 20,000 more for a 57.5M-param transformer
+  # trained on the new CG + iris banks.  20,000 is chosen because Round 18 measured plate
+  # capability PEAKING at 20,000 updates and declining thereafter while CG metrics improved
+  # monotonically - so the cap reflects where the evidence says the useful range ends, not the
+  # hardware limit.  Acceptance thresholds in contracts/acceptance.yaml are untouched.
+  max_total_optimizer_steps: 420000
+data:
+  identity_counts: {train: 288, validation: 36, test: 36}
+  still_pairs: {train: 8192, validation: 256, test: 256}
+  # Deployment-shaped stills: eyes into the lens with one clear catchlight on the iris - portrait
+  # photography, a reporter talking to camera, green-screen performance.  Measured on the old
+  # sampler, only 13.9% of draws looked like this.  Added as a separate index space so the 8,869
+  # already-rendered shots are untouched (see plan_dataset).  Framing mix: two eyes 30%, one eye
+  # (left or right) 40%, ultra close-up 30%.  The key light is drawn from every family and swept
+  # around the iris, so the catchlight is not always a softbox above the subject.
+  portrait_pairs: {train: 24576, validation: 768, test: 768}
+  # Round 2 (user request after reviewing renders): the openness law puts 40% of shots in the
+  # relaxed-lid band 0.55-0.82, where the upper lid rests over the iris and casts a heavy shadow
+  # across the eye; only 15.6% are fully open.  This population is identical in every other respect
+  # but draws openness 0.92-1.0.  Own index space and seed namespace: nothing already rendered is
+  # re-seeded.  Raises fully-open portrait shots from 15.6% to ~28% of the portrait population.
+  portrait_open_pairs: {train: 4096, validation: 128, test: 128}
+  clips: {train: 128, validation: 12, test: 12}
+  camera_sim:
+    exposure_midgray_min: 0.08
+    exposure_midgray_max: 0.5
+    highlight_rolloff_prob: 0.6
+    codec_prob: 0.6
+    forced_saturation_prob: 0.55  # >= 25% of samples with a saturated reflection (strict per-sample metric, measured 27.5%)
+    sclera_exposure_prob: 0.7
+    monochrome_prob: 0.15   # black-and-white delivery; a render-free augmentation, identical mix on source and target
+    # Round 2: the sampler draws the native iris size log-uniformly from 8 px to the rendered size, so
+    # the size mix was independent of the new portrait framing (12-36 px stayed at 38% of draws).  Half
+    # of the portrait draws now land at 1080p-portrait sizes (the user's plate: 17.7 px); the other
+    # half and every non-portrait shot keep the full range.
+    portrait_native_iris: {prob: 0.5, min_px: 12, max_px: 36}
+  demographics:
+    ages: child_to_90s_balanced
+    sex: female_male
+    match_skin_to_age_and_ancestry: true
+    exclude_makeup_and_tattoo_skins: true
+    natural_makeup_prob_female: 0.3
+  catchlights:
+    key_softbox_prob: 0.5
+    relaxed_lid_prob: 0.35
+    clean_iris_render: true
+model:
+  reflection_presence: true
+  reflection_visibility: 0.06
+  conf_target: improvement
+inference:
+  gate_selection: validation
+training:
+  guard: {steps: 30000, microbatch: 4, effective_batch: 16}
+  image: {steps: 16000, microbatch: 4, effective_batch: 16}
+  temporal: {steps: 10000, microbatch: 1, effective_batch: 8}
+  presence: {steps: 6000, microbatch: 16, effective_batch: 16}
+  checkpoint_every_steps: 1000
+  validation_every_steps: 1000

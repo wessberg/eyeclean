@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "eyeclean.process/1/index",
+  "title": "EyeClean per-frame index: patches/index.json (eyeclean.process/1)",
+  "description": "Every processed frame, and every tracked eye in it. Paths are relative to the output directory. data_window is [x0, y0, x1, y1) in full-frame pixels. Additional fields may appear within version 1.",
+  "type": "object",
+  "required": ["schema", "frames", "width", "height", "working_color"],
+  "properties": {
+    "schema": {"const": "eyeclean.process/1"},
+    "width": {"type": "integer"}, "height": {"type": "integer"},
+    "working_color": {"enum": ["linear-acescg", "linear-rec709"]},
+    "frames": {"type": "array", "items": {
+      "type": "object",
+      "required": ["frame", "time_s", "eyes"],
+      "properties": {
+        "frame": {"type": "integer", "description": "0-based frame index in the input"},
+        "time_s": {"type": "number"},
+        "pts": {"type": ["integer", "null"]},
+        "source": {"type": ["string", "null"]},
+        "eyes": {"type": "array", "items": {
+          "type": "object",
+          "required": ["track", "eye", "status", "reasons", "support_px"],
+          "properties": {
+            "track": {"type": "integer", "description": "stable eye track id within the clip"},
+            "eye": {"type": "string", "description": "which eye of its face (left/right as seen by the tracker)"},
+            "status": {"enum": ["repaired", "untouched"], "description": "repaired: pixels inside the hard support were edited; untouched: the eye is bit-exact"},
+            "reasons": {"type": "array", "items": {"type": "string"}, "description": "why the gate decided as it did (e.g. no_reflection_detected, fill_network_value_12px)"},
+            "support_px": {"type": "integer"}, "abstained_px": {"type": "integer"}, "synth_px": {"type": "integer"},
+            "roi": {"type": "array", "items": {"type": "integer"}, "minItems": 4, "maxItems": 4},
+            "data_window": {"type": "array", "items": {"type": "integer"}, "minItems": 4, "maxItems": 4},
+            "patch": {"type": "string", "description": "signed correction EXR (R,G,B = output - source, working space)"},
+            "replacement": {"type": "string", "description": "RGBA EXR, straight alpha, A = hard support"},
+            "mask": {"type": "string", "description": "EXR channels hard, feather, synth, selected, abstained"},
+            "uncertainty": {"type": "string"}
+          }}}
+      }}}
+  }
+}

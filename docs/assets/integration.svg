@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 380" width="1000" height="380" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif">
+  <title>Calling EyeClean from outside: every consumer talks to one engine through a job, progress events and an output contract</title>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#51606d"/></marker>
+    <style>.b{fill:#fff;stroke:#9fb3c4;stroke-width:1.5}.e{fill:#2f6f9f}.c{fill:#eaf4fb;stroke:#2f6f9f;stroke-width:1.5}.t{font-size:14px;fill:#24323d;font-weight:600}.s{font-size:11.5px;fill:#566673}.w{font-size:14px;fill:#fff;font-weight:700}.ws{font-size:11.5px;fill:#d9ecfa}.l{stroke:#51606d;stroke-width:1.5;fill:none;marker-end:url(#a)}</style>
+  </defs>
+  <rect width="1000" height="380" rx="18" fill="#f7f9fb"/>
+  <text x="30" y="38" font-size="15" fill="#2f6f9f" font-weight="700">consumers (any Python / any language)</text>
+  <rect x="30" y="54" width="250" height="56" rx="10" class="c"/><text x="155" y="78" text-anchor="middle" class="t">blender-virtual-production</text><text x="155" y="96" text-anchor="middle" class="s">eyeclean_pass.py (Python 3.13)</text>
+  <rect x="30" y="122" width="250" height="56" rx="10" class="c"/><text x="155" y="146" text-anchor="middle" class="t">Nuke / Blender add-on / app</text><text x="155" y="164" text-anchor="middle" class="s">eyeclean-client: run(), events, cancel</text>
+  <rect x="30" y="190" width="250" height="56" rx="10" class="c"/><text x="155" y="214" text-anchor="middle" class="t">render farm (Deadline, OpenCue…)</text><text x="155" y="232" text-anchor="middle" class="s">one task per shot: CLI + job file</text>
+  <rect x="30" y="258" width="250" height="56" rx="10" class="c"/><text x="155" y="282" text-anchor="middle" class="t">Python in the engine env</text><text x="155" y="300" text-anchor="middle" class="s">eyeclean.api.process()</text>
+  <path d="M280 82C340 82 340 170 382 176" class="l"/><path d="M280 150H382" class="l"/><path d="M280 218C330 218 340 196 382 192" class="l"/><path d="M280 286C350 286 360 214 382 206" class="l"/>
+  <text x="330" y="128" text-anchor="middle" class="s">job.json</text>
+  <rect x="386" y="118" width="228" height="112" rx="12" class="e"/>
+  <text x="500" y="146" text-anchor="middle" class="w">EyeClean engine</text>
+  <text x="500" y="166" text-anchor="middle" class="ws">own environment: Python 3.12,</text>
+  <text x="500" y="182" text-anchor="middle" class="ws">PyTorch + CUDA, NVIDIA GPU</text>
+  <text x="500" y="206" text-anchor="middle" class="ws">eyeclean process --job … --progress jsonl</text>
+  <path d="M614 150H676" class="l"/><text x="645" y="140" text-anchor="middle" class="s">stdout</text>
+  <rect x="680" y="118" width="290" height="56" rx="10" class="b"/><text x="825" y="142" text-anchor="middle" class="t">progress events (JSON lines)</text><text x="825" y="160" text-anchor="middle" class="s">start · stage · frame · warning · done | error</text>
+  <path d="M614 206H676" class="l"/><text x="645" y="224" text-anchor="middle" class="s">files</text>
+  <rect x="680" y="184" width="290" height="72" rx="10" class="b"/><text x="825" y="208" text-anchor="middle" class="t">output directory</text><text x="825" y="226" text-anchor="middle" class="s">float EXR corrections + masks,</text><text x="825" y="240" text-anchor="middle" class="s">index.json, RUN_REPORT.json (last)</text>
+  <rect x="680" y="266" width="290" height="56" rx="10" class="b"/><text x="825" y="290" text-anchor="middle" class="t">exit code</text><text x="825" y="308" text-anchor="middle" class="s">0 ok · 2 config · 3 GPU · 4 input · 5 failed · 7 cancelled</text>
+  <path d="M500 230V294H676" class="l"/>
+  <rect x="386" y="262" width="228" height="52" rx="10" class="b"/><text x="500" y="284" text-anchor="middle" class="t">cancel file</text><text x="500" y="302" text-anchor="middle" class="s">touch it → clean stop, exit 7</text>
+  <text x="500" y="350" text-anchor="middle" class="s">contracts: eyeclean.job/1 · eyeclean.progress/1 · eyeclean.process/1 — JSON Schemas in src/eyeclean/schemas/</text>
+</svg>

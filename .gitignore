@@ -1,0 +1,59 @@
+# Allowlist: everything at the top level is ignored unless named below.  A new top-level file or folder is
+# private until it is added here on purpose.  (private/, runs/, own-footage/, third_party/ and .venv/ stay local.)
+/*
+!/.gitignore
+!/.gitattributes
+!/.github/
+!/.python-version
+!/AGENTS.md
+!/CLAUDE.md
+!/CHANGELOG.md
+!/CODE_OF_CONDUCT.md
+!/CONTRIBUTING.md
+!/LICENSE
+!/MODEL_CARD.md
+!/README.md
+!/SECURITY.md
+!/THIRD_PARTY_NOTICES.md
+!/bootstrap.ps1
+!/bootstrap.sh
+!/pyproject.toml
+!/uv.lock
+!/blender/
+!/clients/
+!/configs/
+!/contracts/
+!/docs/
+!/integrations/
+!/models/
+!/src/
+!/tests/
+!/tools/
+
+# tools/: only the public tools.  The GPU console scripts that live next to them are the maintainers'
+# workstation tooling and stay local.
+/tools/*
+!/tools/README.md
+!/tools/release_tree.py
+
+# models/: the directory and its README; the weights themselves are release assets, never committed.
+/models/*
+!/models/README.md
+
+# everywhere
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+.venv/
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+*.mp4
+*.mov
+*.mkv
+*.part
+RELEASE_SCAN.json

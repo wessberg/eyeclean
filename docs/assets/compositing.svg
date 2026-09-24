@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 300" width="1000" height="300" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif">
+  <title>Applying EyeClean's output: one addition inside a data window</title>
+  <defs>
+    <radialGradient id="ir" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#3b2a1c"/><stop offset="60%" stop-color="#86603a"/><stop offset="100%" stop-color="#4a331f"/></radialGradient>
+    <pattern id="chk" width="10" height="10" patternUnits="userSpaceOnUse"><rect width="10" height="10" fill="#eef1f4"/><rect width="5" height="5" fill="#dde3e8"/><rect x="5" y="5" width="5" height="5" fill="#dde3e8"/></pattern>
+    <style>.t{font-size:15px;fill:#24323d;font-weight:600}.s{font-size:12px;fill:#566673}.op{font-size:34px;fill:#2f6f9f;font-weight:700}</style>
+  </defs>
+  <rect width="1000" height="300" rx="18" fill="#f7f9fb"/>
+  <!-- source -->
+  <rect x="40" y="50" width="180" height="150" rx="8" fill="#e9dfd6" stroke="#b9a697"/>
+  <circle cx="130" cy="125" r="52" fill="url(#ir)"/><circle cx="130" cy="125" r="21" fill="#0d0a08"/>
+  <rect x="113" y="96" width="18" height="14" rx="2" fill="#ffffff"/>
+  <text x="130" y="228" text-anchor="middle" class="t">source</text>
+  <text x="130" y="246" text-anchor="middle" class="s">your plate, untouched</text>
+  <text x="248" y="138" text-anchor="middle" class="op">+</text>
+  <!-- correction -->
+  <rect x="276" y="50" width="180" height="150" rx="8" fill="url(#chk)" stroke="#b9a697"/>
+  <rect x="336" y="78" width="60" height="50" fill="#1f3f5c" fill-opacity="0.12" stroke="#2f6f9f" stroke-dasharray="4 3"/>
+  <rect x="353" y="96" width="18" height="14" rx="2" fill="#3d6e96"/>
+  <text x="366" y="228" text-anchor="middle" class="t">patches/f…_t….exr</text>
+  <text x="366" y="246" text-anchor="middle" class="s">signed correction, only its data window</text>
+  <text x="366" y="262" text-anchor="middle" class="s">stored; exactly 0 outside the support</text>
+  <text x="484" y="138" text-anchor="middle" class="op">=</text>
+  <!-- result -->
+  <rect x="512" y="50" width="180" height="150" rx="8" fill="#e9dfd6" stroke="#b9a697"/>
+  <circle cx="602" cy="125" r="52" fill="url(#ir)"/><circle cx="602" cy="125" r="21" fill="#0d0a08"/>
+  <text x="602" y="228" text-anchor="middle" class="t">result</text>
+  <text x="602" y="246" text-anchor="middle" class="s">in the working space you chose</text>
+  <!-- alternatives -->
+  <line x1="724" y1="40" x2="724" y2="270" stroke="#c9d4dd" stroke-width="1.5"/>
+  <text x="744" y="66" class="t">or, per eye</text>
+  <text x="744" y="90" class="s">• *_replacement.exr: RGBA, straight alpha,</text>
+  <text x="744" y="106" class="s">   A = hard support — an "over" in Nuke</text>
+  <text x="744" y="130" class="s">• masks/*.exr: hard, feather (the blend weight</text>
+  <text x="744" y="146" class="s">   used), synth, selected, abstained</text>
+  <text x="744" y="170" class="s">• master/ full frames (--export master)</text>
+  <text x="744" y="194" class="s">• `eyeclean apply-patches` = the reference</text>
+  <text x="744" y="210" class="s">   compositor, verified bit-exact</text>
+  <text x="744" y="240" class="s">index.json says which eyes were repaired</text>
+  <text x="744" y="256" class="s">and why the others were left untouched</text>
+</svg>

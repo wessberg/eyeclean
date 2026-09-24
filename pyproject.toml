@@ -1,0 +1,57 @@
+[project]
+name = "eyeclean"
+version = "0.3.0"
+description = "Remove studio catchlights from eyes in video on the GPU, leaving every other pixel bit-identical."
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = { text = "MIT, except blender/ (GPL-3.0-or-later); see LICENSE and THIRD_PARTY_NOTICES.md" }
+dependencies = [
+  "torch==2.14.0",
+  "torchvision==0.29.0",
+  "pynvvideocodec==2.2.2",
+  # PyNvVideoCodec 2.2.2 links cudart64_12.dll; torch cu130 ships only the CUDA 13 runtime.
+  "nvidia-cuda-runtime-cu12==12.9.79; sys_platform == 'win32' or sys_platform == 'linux'",
+  "safetensors>=0.5",
+  "pyyaml>=6.0",
+  "jsonschema>=4.23",
+  "numpy>=2.0",
+  "av>=14.0",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=8.3",
+  "openexr>=3.3",
+  "colour-science>=0.4.6",
+]
+
+[project.scripts]
+eyeclean = "eyeclean.cli.main:main"
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/eyeclean"]
+
+[tool.uv]
+default-groups = ["dev"]
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu130" }]
+torchvision = [{ index = "pytorch-cu130" }]
+
+[[tool.uv.index]]
+name = "pytorch-cu130"
+url = "https://download.pytorch.org/whl/cu130"
+explicit = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "gpu: requires a CUDA GPU",
+  "blender: requires Blender with an OptiX device",
+  "codec: requires NVDEC/NVENC through PyNvVideoCodec",
+  "slow: long-running test",
+]

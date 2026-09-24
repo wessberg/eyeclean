@@ -1,0 +1,26 @@
+# Optional larger experiment. Resolve extends relative to this file.
+extends: prototype.yaml
+profile: quality
+run_dir: runs/quality
+resources:
+  workspace_cap_gib: 256
+  min_free_disk_gib: 24
+  max_total_optimizer_steps: 140000
+render:
+  width: 768
+  height: 512
+  samples: 256
+data:
+  identity_counts: {train: 512, validation: 64, test: 64}
+  still_pairs: {train: 8192, validation: 512, test: 512}
+  clips: {train: 256, validation: 16, test: 16}
+  frames_per_clip: 24
+  demo_frames_per_case: 48
+model:
+  crop_size: 384
+training:
+  guard: {steps: 12000, microbatch: 2, effective_batch: 16}
+  image: {steps: 40000, microbatch: 2, effective_batch: 16}
+  temporal: {steps: 60000, microbatch: 1, effective_batch: 8}
+  checkpoint_every_steps: 1000
+  validation_every_steps: 1000
