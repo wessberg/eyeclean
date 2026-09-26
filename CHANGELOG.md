@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.4.0 (unreleased): photos
+
+### Added
+
+- **`eyeclean fix <photo>`:** repairs a photo with no colour flags and writes `<name>.eyeclean.<ext>` next to it.
+- **Photo input to `process`:** JPEG (decoded on the GPU), PNG, WebP, TIFF and BMP.
+  - The colour comes from the file: an ICC matrix/TRC profile, a PNG cICP / sRGB chunk, or sRGB when untagged
+    (recorded).
+  - The EXIF orientation is applied; any size and bit depth is accepted.
+  - A new `photo` export writes the result in the input's format; original code values stay outside the edit
+    support.
+- **A CPU decode fallback** (PyAV) for image formats without a GPU decoder, recorded in the report.
+- **The GPU audit** gains the declared boundaries `image_bitstream_decode`, `image_bitstream_download` and
+  `cpu_decode_fallback_upload`.
+
+### Changed
+
+- **The default model is `eyeclean-r54`**, 238.5 MB, MIT (see MODEL_CARD.md).
+  - It is `eyeclean-r48` with EyeGuard and the presence classifier fine-tuned across iris sizes of 8-160 px; the
+    restorer is identical.
+  - On close-up photos it detects many more catchlights: on held-out CG, 55% -> 74%; on three real phone photos,
+    1 of 4 -> 4 of 4 catchlight eyes.
+  - On iris images it removes more: error reduction 26% -> 44%.
+  - It makes fewer false edits on bright sclera during blinks.
+  - Trade-offs: on CG close-ups it edits more clean eyes (4.9% -> 7.1%), and on the development shot its fill is
+    about one 8-bit level cooler (its colour guard fails; promoted by the owners after reviewing stills).
+  - `eyeclean-r48` stays in the registry (`--model eyeclean-r48`).
+- `--restore-mode auto` on a bundle that is not in the registry and has no five-frame restorer now selects `single`
+  instead of failing.
+
 ## 0.3.0 (unreleased): the open-source release
 
 ### Changed

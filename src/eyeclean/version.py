@@ -1,6 +1,6 @@
 """EyeClean version and the versions of its external contracts (docs/INTEGRATION.md)."""
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 # Bumped on any incompatible change; additive fields keep the version.
 PROCESS_REPORT_SCHEMA = "eyeclean.process/1"   # RUN_REPORT.json, patches/index.json

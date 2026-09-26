@@ -10,6 +10,17 @@ the plate away.  EyeClean finds the eyes, removes the designated reflection and 
 It changes **only** those pixels; every other pixel of the frame stays bit-identical.  It is steady from frame to frame,
 because judging that has been most of the work.
 
+> **What kind of model it is.**  EyeClean is a supervised image-to-image restoration model, trained only on synthetic
+> paired renders: the same eye with and without the studio light's reflection.  After off-the-shelf face and landmark
+> detection, two networks run on a 256 px crop of each eye:
+> - a small CNN, a convolutional U-Net with 1.8M parameters, segments the iris, pupil, lids and the reflection;
+> - a 57.5M-parameter convolutional transformer predicts the repaired pixels as a residual correction.  It follows
+>   Restormer: a U-shaped stack of transformer blocks whose attention runs across channels rather than pixels, with every
+>   projection done by convolutions, so there are no patches or tokens.
+>
+> A rule-based gate applies that correction only inside a hard mask.  It is deterministic, not generative: no diffusion,
+> no GAN.
+
 - **Preservation guarantee.**
   - Every frame is checked on the GPU: outside the final edit support, the IEEE-754 bit pattern of every output pixel
     equals the decoded source.
@@ -43,7 +54,12 @@ because judging that has been most of the work.
 ```powershell
 git clone <repo> eyeclean; cd eyeclean
 ./bootstrap.ps1                                   # uv sync --frozen, face-detector weights, quick doctor (Linux: ./bootstrap.sh)
-uv run eyeclean models --fetch                    # the default model, eyeclean-r48 (239 MB), SHA-256 verified
+uv run eyeclean models --fetch                    # the default model, eyeclean-r54 (239 MB), SHA-256 verified
+```
+
+**A photo** (JPEG, PNG, WebP, TIFF, ...; any size; colour and orientation are read from the file):
+```powershell
+uv run eyeclean fix IMG_1234.jpg                  # writes IMG_1234.eyeclean.jpg next to it
 ```
 
 **A video file** (H.264 / HEVC / AV1 / VP9, 8-12 bit):
@@ -159,7 +175,7 @@ More: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Licence
 
-- **MIT:** EyeClean's code and documentation, and the released model weights (`eyeclean-r48`).  See [LICENSE](LICENSE).
+- **MIT:** EyeClean's code and documentation, and the released model weights (`eyeclean-r54`, and `eyeclean-r48` before it).  See [LICENSE](LICENSE).
 - **GPL-3.0-or-later:** the Blender data-generation scripts (`blender/`), because they drive MPFB.
 - **Third-party assets and weights** carry their own terms: the face-detector weights, fetched at install; the iris
   dataset the model was trained on.  See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and

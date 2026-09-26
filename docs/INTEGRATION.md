@@ -37,7 +37,7 @@ uv run eyeclean models --fetch       # download the default model and verify its
 uv run eyeclean models               # where models are looked for, and which are installed
 ```
 
-- **Models:** `eyeclean models --fetch` puts the default model (`eyeclean-r48.safetensors`) in the user model
+- **Models:** `eyeclean models --fetch` puts the default model (`eyeclean-r54.safetensors`) in the user model
   directory.  You can also download it yourself and put it in one of:
   - `$EYECLEAN_MODEL_DIR`;
   - `%LOCALAPPDATA%\eyeclean\models` (Windows) or `~/.local/share/eyeclean/models`;
@@ -106,7 +106,7 @@ eyeclean process --job shot.eyeclean.json --progress jsonl
 With `--progress jsonl`, stdout carries only JSON lines.  `--progress-file` writes the same stream to a file as well:
 
 ```text
-{"schema":"eyeclean.progress/1","event":"start","t":0.0,"input":"...","output":"...","model":{"name":"eyeclean-r48","sha256":"1505...","restore_mode":"single"},"frames_expected":1200}
+{"schema":"eyeclean.progress/1","event":"start","t":0.0,"input":"...","output":"...","model":{"name":"eyeclean-r54","sha256":"bfdc...","restore_mode":"single"},"frames_expected":1200}
 {"schema":"eyeclean.progress/1","event":"stage","t":0.9,"stage":"analysis"}
 {"schema":"eyeclean.progress/1","event":"frame","t":1.1,"stage":"analysis","frame":0,"done":1,"total":1200}
 ...
@@ -181,7 +181,11 @@ result[y0:y1, x0:x1] += correction          # correction is exactly 0 outside th
 
 ## 6. Colour
 
-- **Declare the input's colour.**  EyeClean converts the decoded source once to FP32 linear.  That exact array is the
+- **Photos carry their own colour.**  For a still image (JPEG, PNG, WebP, TIFF, BMP) EyeClean reads the colour from the
+  file: an ICC profile (matrix/TRC: sRGB, Display P3, Adobe RGB, ...) or a PNG cICP / sRGB chunk.  An untagged photo is
+  read as sRGB, the convention for untagged images, and the report says `colour_assumed: true`.  The EXIF orientation is
+  applied, and `--input-color` is ignored for photos.
+- **Video and EXR sequences: declare the input's colour.**  EyeClean converts the decoded source once to FP32 linear.  That exact array is the
   preservation reference.
 - **Best input:**
   - a scene-linear EXR sequence (`linear-acescg` or `linear-rec709`);
@@ -192,6 +196,30 @@ result[y0:y1, x0:x1] += correction          # correction is exactly 0 outside th
 - **Unsupported codecs:** ProRes, DNxHR and RAW are not decodable on NVDEC.  Export an EXR sequence or HEVC.
 - **EXR compression:** EXR inputs may be uncompressed, ZIP or ZIPS.  PIZ, DWAA/B, B44 and others are refused with a
   conversion hint (`oiiotool in.exr --compression zip -o out.exr`).
+
+## 6a. Photos
+
+```
+eyeclean fix IMG_1234.jpg [more files] [--model NAME|PATH] [--output FILE|DIR] [--keep-work]
+```
+
+- **The simplest route:** `fix` runs the full pipeline and writes `<name>.eyeclean.<ext>` next to each input (or to
+  `--output`).  It prints the eyes it repaired and left untouched, the colour it used and the decode path.
+- **`process` also accepts a photo.**  Its output directory then gains the photo, `<name>.eyeclean.<ext>`, listed as
+  `outputs.photo` in `RUN_REPORT.json`, with the file's details under `interpretation.still`.  There is no MP4 preview.
+- **Output format:**
+  - JPEG in -> JPEG out, encoded on the GPU at quality 95.  EXIF (orientation reset to 1, since the pixels are written
+    upright) and the ICC profile are carried over.
+  - PNG in -> PNG out, 8 or 16 bit.
+  - Other formats -> PNG.
+- **Preservation:** outside the edit support the original decoded code values are written back.  A PNG output is
+  therefore bit-identical there; a JPEG output is re-encoded as a whole (lossy).  The EXR patches (`--keep-work`, or
+  `process`) remain the exact deliverable.
+- **Decoding:** JPEG decodes on the GPU (nvJPEG).  Formats without a GPU decoder (PNG, WebP, TIFF, BMP, CMYK JPEG)
+  decode on the CPU through PyAV and are uploaded once; all image processing stays on the GPU.  The report records the
+  path (`interpretation.still.decode`).
+- **Not yet:** HEIC / HEIF and AVIF (planned), Ultra HDR gain maps (the SDR base is processed and the output has no
+  gain map; the run warns), photo output in WebP / TIFF / HEIC.
 
 ## 7. Python API (engine environment)
 
@@ -267,5 +295,6 @@ These are known gaps, in rough order of value:
 - **Resuming** after a cancel.
 - **Device selection:** device 0 is always used.
 - **EXR metadata:** output EXRs carry no `chromaticities` attribute.
-- **Input compressions:** PIZ / DWA EXRs, ProRes and DNxHR input.
+- **Input compressions:** PIZ / DWA EXRs, ProRes and DNxHR input; HEIC / AVIF photos.
+- **Video colour from the stream** (BT.2020, PQ, HLG) and video-in / video-out with audio: in progress.
 - **Hardware:** no CPU fallback, and no GPU other than NVIDIA.

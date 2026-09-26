@@ -25,6 +25,7 @@ from ..io.errors import InputError
 from ..io.exr import read_exr
 from ..io.sequence import resolve_sequence
 from ..io.sidecar import find_sidecar, load_sidecar, resolve_interpretation
+from ..io.stills import is_still
 from ..models.bundle import Bundle
 from ..models.registry import resolve_model
 from ..version import PROCESS_REPORT_SCHEMA, __version__
@@ -55,7 +56,7 @@ class ProcessArgs:
     max_frames: int | None = None
     max_region: str | None = None
     full_frame_master: bool = False
-    restore_mode: str = "auto"          # auto: the model registry's setting for this bundle, else "temporal"
+    restore_mode: str = "auto"          # auto: the registry's setting; else "single" for a bundle without a five-frame restorer, else "temporal"
     forbid_read: list = field(default_factory=list)
     profile: bool = True
     config_working: str = "linear-acescg"
@@ -87,7 +88,9 @@ def parse_fps(v) -> Fraction | None:
 
 
 def input_files(path: str) -> list[str]:
-    return [path] if is_video(path) else [f for _, f in resolve_sequence(path)]
+    if is_video(path) or (Path(path).is_file() and is_still(path)):
+        return [path]
+    return [f for _, f in resolve_sequence(path)]
 
 
 def hash_files(files: list[str]) -> dict:
@@ -189,14 +192,26 @@ def run_process(a: ProcessArgs) -> dict:
         vinfo = probe(a.input)
         check_supported(vinfo)
         meta_range, meta_matrix = vinfo.color_range_meta, vinfo.color_space_meta
-    interp = resolve_interpretation(is_video=video, cli_color=a.input_color, cli_range=a.input_range, cli_working=a.working_color,
-                                    sidecar=sidecar, meta_range=meta_range, meta_matrix=meta_matrix, config_working=a.config_working)
+    still = (not video) and Path(a.input).is_file() and is_still(a.input)
+    still_warn = []
+    if still:
+        # a photo carries its own colour (ICC / cICP, or the untagged-sRGB convention); it is read from the file
+        working = a.working_color or a.config_working
+        interp = {"input_color": "auto (from the file)", "working_color": working, "input_range": "full", "ycbcr_matrix": "n/a",
+                  "sources": {"input_color": "file", "working_color": "cli" if a.working_color else "config", "input_range": "file"}}
+        if a.input_color:
+            still_warn.append(f"--input-color {a.input_color} ignored: a still image's colour is read from the file")
+    else:
+        interp = resolve_interpretation(is_video=video, cli_color=a.input_color, cli_range=a.input_range, cli_working=a.working_color,
+                                        sidecar=sidecar, meta_range=meta_range, meta_matrix=meta_matrix, config_working=a.config_working)
     if fps is None and not video and sidecar.get("fps") is not None:
         fps_exact = parse_fps(sidecar.get("fps"))
         fps = float(fps_exact)
     ts = a.timestamps or (sidecar.get("timestamps") if not video else None)
     hashes_before = hash_files(files)
     bundle = Bundle(model.path, dev)
+    if restore_src == "default" and bundle.restore is None:
+        restore_mode, restore_src = "single", "bundle has no five-frame restorer"
     if restore_mode == "temporal" and bundle.restore is None:
         raise InputError(f"model {model.name or model.path} has no five-frame restorer; use --restore-mode single (or auto)")
     src1 = FrameSource(a.input, interp, dev, fps, ts, a.max_frames)
@@ -215,8 +230,17 @@ def run_process(a: ProcessArgs) -> dict:
     pipe = Pipeline(bundle, dev, mode=a.mode, strength=a.strength, working_color=interp["working_color"], max_faces=a.max_faces,
                     min_iris_px=a.min_iris_px, buffer_frames=a.buffer_frames, temporal=(restore_mode == "temporal"),
                     max_region=max_region)
-    exporter = Exporter(out, src1.width, src1.height, src1.nominal_fps, set(a.export), interp["working_color"], src1.time_base,
-                        master=a.full_frame_master, exr_compression=a.exr_compression)
+    exports = set(a.export)
+    if still:
+        interp["still"] = src1.still.record()
+        exports.discard("preview")      # no video preview for a still; the photo itself is written instead
+        exports.add("photo")
+        if src1.still.colour_assumed:
+            still_warn.append(f"colour: {src1.still.colour}")
+        if src1.still.has_gain_map:
+            still_warn.append("the file is an Ultra HDR / gain-map JPEG: its SDR base image was processed; the output has no gain map")
+    exporter = Exporter(out, src1.width, src1.height, src1.nominal_fps, exports, interp["working_color"], src1.time_base,
+                        master=a.full_frame_master, exr_compression=a.exr_compression, still=src1.still)
     state = {"analysis_frames": None}
 
     def on_frame(fr, res, patches, recs):
@@ -273,7 +297,7 @@ def run_process(a: ProcessArgs) -> dict:
                 "fps_exact": str(fps_exact) if fps_exact is not None else None,
                 "checkpoint": {"path": os.path.abspath(model.path), "sha256": bundle.sha256, "name": model.name}}
     (out / "source_manifest.json").write_text(json.dumps(manifest, indent=1), encoding="utf-8")
-    warn = []
+    warn = list(still_warn)
     if model.restore_mode and restore_mode != model.restore_mode:
         warn.append(f"restore_mode {restore_mode!r} overrides this model's {model.restore_mode!r}: the output is not the "
                     f"configuration this model was promoted with")
@@ -315,6 +339,7 @@ def run_process(a: ProcessArgs) -> dict:
         "previews": prev, "outputs": {"index": "patches/index.json", "patches": "patches/", "masks": "masks/", "uncertainty": "uncertainty/",
                                       "master": "master/" if exporter.master else None, "tracks": "tracks.json",
                                       "source_manifest": "source_manifest.json",
+                                      "photo": exporter.photo["path"] if exporter.photo else None,
                                       "canonical": "canonical/" if a.mode == "hybrid" else None,
                                       "note": "MP4 previews are viewing copies, not pixel-preservation masters"},
         "warnings": warn, "seconds": round(time.time() - t0, 2),
@@ -325,6 +350,8 @@ def run_process(a: ProcessArgs) -> dict:
                "cuts": pipe.cuts, "eye_status_counts": status_counts, "support_px": supp, "abstained_px": abst,
                "synthesized_px": synth, "source_files_modified": len(changed), "cpu_fallbacks": audit.summary()["cpu_numerical_image_fallbacks"],
                "model": model.name or str(model.path), "restore_mode": restore_mode, "seconds": report["seconds"], "warnings": warn}
+    if exporter.photo:
+        summary["photo"] = exporter.photo["path"]
     if changed:
         raise RuntimeError(f"source files changed during processing: {changed}")
     return {"summary": summary, "report": report}

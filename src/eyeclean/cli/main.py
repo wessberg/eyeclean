@@ -97,6 +97,14 @@ def cmd_process(a) -> int:
     return EXIT_OK
 
 
+def cmd_fix(a) -> int:
+    from ..inference.fix import fix_file
+
+    results = [fix_file(f, model=a.model, output=a.output, many=len(a.inputs) > 1, keep_work=a.keep_work) for f in a.inputs]
+    _print(results[0] if len(results) == 1 else results)
+    return EXIT_OK
+
+
 def cmd_models(a) -> int:
     from ..models.registry import fetch_model, list_models
 
@@ -209,7 +217,7 @@ def build_parser() -> argparse.ArgumentParser:
                     help="required for hybrid mode: permits labeled synthesized iris/pupil content")
     pr.add_argument("--output", default=None)
     pr.add_argument("--gpu-policy", default="strict", choices=["strict"])
-    pr.add_argument("--export", default=None, help="comma list: patches,preview,report,master (default patches,preview,report)")
+    pr.add_argument("--export", default=None, help="comma list: patches,preview,report,master,photo (default patches,preview,report; a photo input writes the photo)")
     pr.add_argument("--input-range", default=None, choices=["auto", "full", "limited"])
     pr.add_argument("--working-color", default=None, choices=["linear-acescg", "linear-rec709"])
     pr.add_argument("--fps", default=None, help="image sequences only: constant frame rate, e.g. 24, 25 or exactly 60000/1001")
@@ -256,6 +264,14 @@ def build_parser() -> argparse.ArgumentParser:
     rv.add_argument("--slow", type=int, default=4, help="slow-motion factor of the extra split-screen copy")
     rv.add_argument("--max-frames", type=int, default=None)
     rv.set_defaults(fn=cmd_review)
+
+    fx = sub.add_parser("fix", help="repair a photo (JPEG, PNG, WebP, TIFF, ...): colour, orientation and bit depth come from the "
+                                     "file; writes <name>.eyeclean.<ext> next to it")
+    fx.add_argument("inputs", nargs="+", help="one or more photos")
+    fx.add_argument("--model", default=None, help="a registry model name or a .safetensors path (default: the registry default)")
+    fx.add_argument("--output", default=None, help="output file (one input) or directory")
+    fx.add_argument("--keep-work", action="store_true", help="keep the full process output (EXR patches, masks, report)")
+    fx.set_defaults(fn=cmd_fix)
 
     m = sub.add_parser("models", help="list the known models, where they are installed and the model search path")
     m.add_argument("--fetch", nargs="?", const="", default=None, metavar="NAME",

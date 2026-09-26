@@ -7,6 +7,8 @@ displayWindow, working-space values):
   masks/f<frame>_t<track>.exr                hard, feather, synth, selected, abstained
   uncertainty/f<frame>_t<track>.exr          uncertainty (1 - raw reconstruction confidence; not a probability)
   master/frame_<frame>.exr                   optional full-frame output (+ original alpha)
+  <name>.eyeclean.<jpg|png>                  still-image input: the repaired photo in the input's format and colour
+                                             (original code values outside the support; see io/stills.py)
 Viewing previews (NOT pixel-preservation masters): preview.mp4, comparison.mp4 (NVENC H.264).
 
 patches/index.json (eyeclean.process/1) lists EVERY tracked eye of every frame with a ``status``:
@@ -28,6 +30,7 @@ from ..io.exr import NO_COMPRESSION, ZIP_COMPRESSION, ZIPS_COMPRESSION, write_ex
 from ..version import PROCESS_REPORT_SCHEMA
 
 _COMPRESSION = {"none": NO_COMPRESSION, "zips": ZIPS_COMPRESSION, "zip": ZIP_COMPRESSION}
+from ..io.stills import output_suffix, write_still
 from ..io.video import VideoWriter
 from .compositor import CompositeResult, EyePatch, signed_correction
 
@@ -42,8 +45,10 @@ def tight_box(mask: torch.Tensor) -> tuple[int, int, int, int] | None:
 
 class Exporter:
     def __init__(self, out: Path, W: int, H: int, fps: float, exports: set[str], working_color: str,
-                 time_base=(1, 90000), master: bool = False, preview_codec: str = "h264", exr_compression: str = "none"):
+                 time_base=(1, 90000), master: bool = False, preview_codec: str = "h264", exr_compression: str = "none",
+                 still=None):
         self.out, self.W, self.H, self.exports, self.working = out, W, H, exports, working_color
+        self.still, self.photo = still, None
         self.cmp = _COMPRESSION[exr_compression]
         self.index: list[dict] = []
         self.master = master or "master" in exports
@@ -121,6 +126,11 @@ class Exporter:
                 ch["A"] = res.alpha.float() if res.alpha.dtype != torch.float32 else res.alpha
             write_exr(self.out / "master" / f"frame_{fr.index:06d}.exr", ch, attributes={"eyeclean/semantics": "full-frame output master"},
                       compression=self.cmp)
+        if self.still is not None and "photo" in self.exports:
+            name = f"{Path(self.still.path).stem}.eyeclean{output_suffix(self.still)}"
+            self.photo = write_still(self.out / name, CT.working_to_linear709(res.output, self.working), res.support, fr.codes,
+                                     self.still, alpha=fr.alpha)
+            self.photo["path"] = name
         if self.preview is not None:
             disp_out = self.display(res.output)
             self.preview.write(disp_out, fr.pts)

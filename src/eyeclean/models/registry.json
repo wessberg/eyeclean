@@ -1,7 +1,18 @@
 {
  "schema": "eyeclean.models/1",
- "default": "eyeclean-r48",
+ "default": "eyeclean-r54",
  "models": {
+  "eyeclean-r54": {
+   "file": "eyeclean-r54.safetensors",
+   "sha256": "bfdca4a272f1ae544d1f13aa67a50af18742444c39e4619eddb95c253c6c5874",
+   "bytes": 238512420,
+   "restore_mode": "single",
+   "promoted": "2026-09-26",
+   "license": "MIT",
+   "url": null,
+   "description": "eyeclean-r48 with EyeGuard and the reflection-presence classifier fine-tuned across iris sizes 8-160 px (better on close-up photos, fewer false edits); same EyeRestoreTX (57.5M); see MODEL_CARD.md",
+   "input_note": "any input colour EyeClean supports; tested on 1080p Rec.709 video, linear Rec.709 EXR and phone JPEG photos"
+  },
   "eyeclean-r48": {
    "file": "eyeclean-r48.safetensors",
    "sha256": "1505f69df6b57bb51a9031294dbe410d51a178984f22868e2010588558cced1f",

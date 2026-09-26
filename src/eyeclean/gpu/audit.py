@@ -43,6 +43,12 @@ TRANSFER_ALLOWLIST: dict[str, str] = {
     "metadata_readback": "small per-frame results (boxes, track ids, scalar metrics) read back for JSON/logging",
     "mask_download": "uint8/float mask tensors downloaded for EXR/PNG layer writing",
     "test_reference": "offline unit-test comparison against CPU reference implementations",
+    "image_bitstream_decode": "a compressed still-image bitstream (JPEG) handed as host bytes to the GPU decoder (nvJPEG), "
+                              "which writes the pixels to CUDA; no host pixel arithmetic",
+    "image_bitstream_download": "an encoded still image (GPU-encoded JPEG, or GPU-packed PNG rows) copied to host for "
+                                "container writing / zlib deflate",
+    "cpu_decode_fallback_upload": "pixels decoded on the CPU by PyAV for formats without a GPU decoder (PNG, WebP, TIFF, "
+                                  "ProRes, ...), uploaded once to CUDA; the run report records the decode path",
 }
 
 # Operators that do not compute on pixel values (metadata/view/allocation only).
@@ -134,6 +140,12 @@ class GpuAudit:
         if name in _NON_NUMERIC_OPS:
             return
         big_cpu = [t for t in tin + tout if t.device.type == "cpu" and t.numel() > self.numel_threshold]
+        if big_cpu and self.current_boundary() == "image_bitstream_decode" and all(
+                t.dtype == torch.uint8 and t.dim() == 1 for t in big_cpu) and all(t.device.type == "cuda" for t in tout):
+            # a GPU decoder reading a host bitstream (nvJPEG): the only host tensor is the compressed byte string
+            self.transfers["HtoD:image_bitstream_decode"] += 1
+            self.transfer_bytes["HtoD:image_bitstream_decode"] += sum(t.numel() for t in big_cpu)
+            return
         if big_cpu:
             # CPU-side arithmetic inside a declared byte boundary is still not allowed, except
             # pure copies (handled above).  Offline tests declare 'test_reference'.

@@ -53,8 +53,11 @@ It must print **CLEAN** before every commit.  Reviewed exceptions are listed, wi
 - [ ] Create the GitHub repository and push.  Then, in its settings:
   - enable **private vulnerability reporting** (SECURITY.md and the Code of Conduct rely on it);
   - protect the default branch.
-- [ ] Upload `eyeclean-r48.safetensors` as a release asset (tag `v0.3.0`).  Set its `url` in the registry, commit,
-      and check `eyeclean models --fetch` on a clean machine.
+- [x] Release bundle `eyeclean-r54.safetensors` (238.5 MB), the default since 2026-09-26: `eyeclean-r48` with the
+      guard and presence classifier fine-tuned across iris sizes; the restorer tensors are identical.  Its own registry
+      entry; a byte-exact ruler against the promoted development file on the full development clip.
+- [ ] Upload `eyeclean-r54.safetensors` (and, optionally, `eyeclean-r48.safetensors`) as release assets on the first
+      public tag.  Set each `url` in the registry, commit, and check `eyeclean models --fetch` on a clean machine.
 - [ ] A fresh clone on a clean machine: `bootstrap`, `eyeclean models --fetch`, `pytest`, one `eyeclean process`.
 - [ ] Linux: bootstrap and tests (untested so far).
 - [ ] README renders on GitHub: SVGs and relative links.

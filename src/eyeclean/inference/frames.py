@@ -16,6 +16,7 @@ import torch
 from ..color import transforms as CT
 from ..io.errors import InputError
 from ..io.sequence import SequenceReader
+from ..io.stills import is_still, read_still
 from ..io.video import VideoReader, planes_to_rgb, probe
 
 
@@ -28,11 +29,12 @@ class FrameRef:
     alpha: torch.Tensor | None
     white: float  # linear (source primaries) white level used for clipped-pixel detection
     source_name: str
+    codes: torch.Tensor | None = None  # stills: the decoded code values (3,H,W), so unedited pixels are written back exactly
 
 
 def is_video(path: str) -> bool:
     p = Path(path)
-    return p.is_file() and p.suffix.lower() not in (".exr",)
+    return p.is_file() and p.suffix.lower() not in (".exr",) and not is_still(path)
 
 
 class FrameSource:
@@ -41,7 +43,15 @@ class FrameSource:
         self.path, self.interp, self.dev = path, interp, device
         self.fps_arg, self.ts_arg, self.max_frames = fps, timestamps, max_frames
         self.video = is_video(path)
-        if self.video:
+        self.still = None
+        if not self.video and Path(path).is_file() and is_still(path):
+            self._still = read_still(path, device)       # (linear 709, alpha, codes, StillInfo); decoded once per source
+            self.still = self._still[3]
+            self.width, self.height = self.still.width, self.still.height
+            self.time_base = (1, 90000)
+            self.nominal_fps = float(fps) if fps else 1.0
+            self.info = None
+        elif self.video:
             if fps:
                 raise InputError("--fps applies only to image sequences; video files keep their real timestamps")
             self.info = probe(path)
@@ -63,6 +73,12 @@ class FrameSource:
             self.info = None
 
     def transform_record(self) -> dict:
+        if self.still is not None:
+            return {"input_color": self.interp["input_color"], "working_color": self.interp["working_color"],
+                    "input_range": "full", "ycbcr_matrix": "n/a",
+                    "transform": f"{self.still.format} decoded by {self.still.decode} -> EXIF orientation "
+                                 f"{self.still.orientation} applied -> {self.still.colour} -> linear Rec.709 -> the working "
+                                 "space, FP32 on CUDA"}
         d = {"input_color": self.interp["input_color"], "working_color": self.interp["working_color"],
              "input_range": self.interp["input_range"], "ycbcr_matrix": self.interp["ycbcr_matrix"],
              "transform": "decoded codes -> R'G'B' (explicit range/matrix, MPEG-2 chroma siting) -> inverse transfer -> "
@@ -72,6 +88,11 @@ class FrameSource:
 
     def __iter__(self):
         ic, wc = self.interp["input_color"], self.interp["working_color"]
+        if self.still is not None:
+            lin, alpha, codes, info = self._still
+            ref = CT.linear709_to_working(lin, wc).contiguous()
+            yield FrameRef(0, 0.0, 0, ref, alpha, 1.0, Path(self.path).name, codes)
+            return
         if self.video:
             r = VideoReader(self.path, self.dev, self.max_frames)
             tb = r.info.time_base

@@ -20,7 +20,7 @@
     "mode": {"enum": ["conservative", "hybrid"]},
     "allow_synthesis": {"type": "boolean"},
     "strength": {"type": "number", "minimum": 0, "maximum": 1},
-    "export": {"oneOf": [{"type": "array", "items": {"enum": ["patches", "preview", "report", "master"]}, "uniqueItems": true},
+    "export": {"oneOf": [{"type": "array", "items": {"enum": ["patches", "preview", "report", "master", "photo"]}, "uniqueItems": true},
                          {"type": "string"}]},
     "max_frames": {"type": "integer", "minimum": 1},
     "max_region": {"type": "string", "description": "single-channel EXR limiting where edits may happen (full-frame, one file for the whole clip)"},
