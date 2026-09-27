@@ -24,13 +24,14 @@ import torch
 from ..color import transforms as CT
 from ..gpu.imgops import CropTransform, dilate, extract_crop, warp_crop_to_crop
 from ..models.bundle import Bundle
-from ..models.inputs import clipped_mask, crop_exposure, denormalize, guard_input, hole_mask, iris_geometry, normalize, restore_input
+from ..models.inputs import (clipped_mask, crop_exposure, denormalize, guard_input, hole_mask, hole_restore_input,
+                             iris_geometry, normalize, restore_input)
 from ..models.presence import presence_input
 from ..tracking.detector import FaceDetector, LandmarkNet, eye_rois_from_landmarks
 from ..tracking.tracker import CutDetector, EyeTracker
 from . import canonical as CAN
 from .compositor import EyePatch, changed_bits_outside, composite
-from .gate import DEFAULT_GATE, check_retired, crop_support, eye_validity, full_res_gate, highlight_excess
+from .gate import DEFAULT_GATE, cap_fill_luma, check_retired, crop_support, eye_validity, full_res_gate, highlight_excess
 
 K_CROP = 2.75  # crop size in iris diameters (middle of the training range)
 
@@ -243,7 +244,12 @@ class Pipeline:
         clip = clipped_mask(crop[None], fr.white, self.working)
         # the hole = the guard's reflection mask, dilated: the value-fill region of fill_mode "network_value"
         hole = hole_mask(probs[None], float(self.gate.get("hole_refl_thresh", 0.5)), int(self.gate.get("hole_dilate_px", 2)))[0, 0]
-        inp = restore_input(crop[None], e, probs[None], clip)[0]
+        if self.gate.get("restore_input", "source") == "hole":
+            # a masked-inpainting restorer: the hole is blanked in its input and its residual applies to the blanked crop
+            inp, base = hole_restore_input(crop[None], e, probs[None], clip, hole[None, None])
+            inp, base = inp[0], base[0]
+        else:
+            inp, base = restore_input(crop[None], e, probs[None], clip)[0], crop
         net = self.b.restore if self.temporal else self.b.restore_single
         with torch.autocast("cuda", dtype=torch.bfloat16):
             feats = net.encode(inp[None]) if self.temporal else None
@@ -257,7 +263,7 @@ class Pipeline:
             stats = {"open": pres > self.gate["present_thresh"], "strict": bool(c1["reflection_present"]), "area": c1["area"],
                      "mean_corr": c1["mean_corr"]}
         return {"crop": crop, "probs": probs, "present": pres, "e": e, "inp": inp, "feats": feats, "rec": rec, "white": fr.white,
-                "refl_present": rp, "out1": out1, "stats": stats, "hole": hole}
+                "refl_present": rp, "out1": out1, "stats": stats, "hole": hole, "base": base}
 
     def _restore(self, t: int, track: int, cache: dict) -> dict:
         center = cache[(t, track)]
@@ -301,7 +307,7 @@ class Pipeline:
         H, W = fr.reference.shape[1:]
         S = self.S
         crop, e, probs = prep["crop"], prep["e"], prep["probs"]
-        src_n = normalize(crop[None], e)
+        src_n = normalize(prep.get("base", crop)[None], e)  # the blanked crop for restore_input "hole"
         pred_n = src_n + out["residual"].float()
         delta = (denormalize(pred_n, e) - crop[None])[0]
         relaxed = self._track_relaxed(rec, cache)
@@ -414,6 +420,10 @@ class Pipeline:
             # crop-space delta leaves the highlight's own edge half-removed
             core_n = inverse_warp(core_c.float()[None], rec.tf, box)[0] > float(self.gate.get("membrane_native_cover", 0.2))
             filled_n = inverse_warp(filled_c, rec.tf, box)
+            cap_q = float(self.gate.get("fill_luma_cap_q", 0.0))
+            if cap_q > 0:
+                filled_n = cap_fill_luma(filled_n, fr.reference[:, y0:y1, x0:x1], core_n, rec.diam, cap_q,
+                                         float(self.gate.get("fill_luma_cap_ring", 0.1)), self.working)
             delta_full = torch.where(core_n[None], filled_n - fr.reference[:, y0:y1, x0:x1], delta_full)
             # a value fill needs no ramp: inside H the core takes the fill completely (the feather ramp at
             # the eroded lid boundary otherwise leaves the highlight's top row at ~60% of the fill)

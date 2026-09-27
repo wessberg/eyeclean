@@ -3,7 +3,7 @@
 The format, orientation, bit depth and colour come from the file (io/stills.py); the default model and its settings
 come from the registry.  The full `process` run happens in a scratch directory, and the repaired photo is written
 next to the input as ``<name>.eyeclean.<ext>`` (or where ``--output`` says).  Files inside the checkout's private
-footage folders are never written next to: their output goes to ``runs/fixed/``.
+footage folders are never written next to: their output goes to ``<runs>/fixed/`` (eyeclean.paths.runs_dir).
 """
 
 from __future__ import annotations
@@ -14,6 +14,7 @@ import tempfile
 from pathlib import Path
 
 from ..io.errors import InputError
+from ..paths import runs_dir
 from ..io.stills import is_still
 from .frames import is_video
 from .process import PRIVATE_DIRS, ROOT, ProcessArgs, run_process
@@ -31,7 +32,7 @@ def _destination(src: Path, name: str, output: str | None, many: bool) -> Path:
     for private in PRIVATE_DIRS:
         root = (ROOT / private).resolve()
         if os.path.normcase(str(parent)).startswith(os.path.normcase(str(root))):
-            d = ROOT / "runs" / "fixed"
+            d = runs_dir() / "fixed"
             d.mkdir(parents=True, exist_ok=True)
             return d / name
     return parent / name

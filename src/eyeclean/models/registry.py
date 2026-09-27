@@ -2,7 +2,7 @@
 
 Search order for a name: $EYECLEAN_MODEL_DIR (os.pathsep-separated), the user model directory
 (%LOCALAPPDATA%/eyeclean/models on Windows, $XDG_DATA_HOME/eyeclean/models or ~/.local/share/eyeclean/models
-elsewhere), then a checkout's models/ and runs/v2/checkpoints.  With no model given, $EYECLEAN_MODEL, then
+elsewhere), then a checkout's models/ and <runs>/v2/checkpoints (eyeclean.paths.runs_dir).  With no model given, $EYECLEAN_MODEL, then
 the registry default.  `fetch_model` downloads a registry model from its `url` and verifies its SHA-256.  A bundle path that matches a registry entry by SHA-256 inherits its settings
 (e.g. restore_mode), so the promoted model needs no hidden flags.
 """
@@ -16,10 +16,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from ..io.errors import InputError
+from ..paths import runs_dir
 
 REGISTRY = Path(__file__).with_name("registry.json")
 _CHECKOUT = Path(__file__).resolve().parents[3]
-_CHECKOUT_MODELS = (_CHECKOUT / "models", _CHECKOUT / "runs" / "v2" / "checkpoints")
 
 
 @dataclass
@@ -52,7 +52,7 @@ def user_model_dir() -> Path:
 def search_dirs() -> list[Path]:
     dirs = [Path(p) for p in os.environ.get("EYECLEAN_MODEL_DIR", "").split(os.pathsep) if p]
     dirs.append(user_model_dir())
-    dirs += [d for d in _CHECKOUT_MODELS if d.is_dir()]
+    dirs += [d for d in (_CHECKOUT / "models", runs_dir() / "v2" / "checkpoints") if d.is_dir()]
     return dirs
 
 

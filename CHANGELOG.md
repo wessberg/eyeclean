@@ -14,6 +14,13 @@
 - **A CPU decode fallback** (PyAV) for image formats without a GPU decoder, recorded in the report.
 - **The GPU audit** gains the declared boundaries `image_bitstream_decode`, `image_bitstream_download` and
   `cpu_decode_fallback_upload`.
+- **A configurable working-output directory** (`eyeclean.paths.runs_dir()`): `runs/` in the checkout by default;
+  `EYECLEAN_RUNS` or `"runs_dir"` in an untracked `.eyeclean-local.json` put it elsewhere, e.g. on another drive,
+  without a link.  Model lookup and `eyeclean fix` use it.
+- **Gate options, all off by default** (research; no shipped model uses them):
+  - `fill_luma_cap_q` / `fill_luma_cap_ring`: cap the value fill's luminance at a quantile of the surrounding eye;
+  - `restore_input: "hole"` is accepted again, for a masked-inpainting restorer
+    (`eyeclean.models.inputs.hole_restore_input`).
 
 ### Changed
 

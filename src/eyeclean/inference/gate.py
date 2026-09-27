@@ -58,6 +58,10 @@ DEFAULT_GATE = {
     # The hole: the guard's reflection channel above hole_refl_thresh, dilated hole_dilate_px crop px.  It
     # is the value-fill region of fill_mode "network_value".
     "hole_refl_thresh": 0.5, "hole_dilate_px": 2,
+    # The restorer's input: "source" (the crop as it is) or "hole" (a masked-inpainting restorer: the hole is blanked
+    # with the eye's mean colour and given as the reflection channel, models.inputs.hole_restore_input, and the
+    # restorer's residual applies to the blanked crop).  A restorer must be trained for the input it is given.
+    "restore_input": "source",
     # Temporal union of the reflection channel over +-N frames of the same track (0 = off), warped into
     # the current crop.  Measured on the development shot: the per-frame gate switched the whole 50 px
     # fill on and off in runs of 6-15 frames while the eye was open (presence 0.2-0.3 on frames where the
@@ -78,6 +82,12 @@ DEFAULT_GATE = {
     # hole covers it.  1: hole pixels on the surface keep their full extent (including the hole_lid_margin_px
     # admissions).  2: only hole pixels inside the guard's own ocular-minus-protected surface.  crop margin_space only.
     "hole_skip_margin": 0,
+    # Cap the value fill's luminance (0 = off).  Inside the value-fill core, a filled pixel brighter than the
+    # q-quantile of the SOURCE luminance in a ring around the core is scaled down to it (one factor for all channels,
+    # so colour is kept).  The restorer sees the catchlight in its input and leaves part of it in the fill; the cap
+    # only darkens, and only inside the hole.  The ring runs from fill_luma_cap_ring x iris to twice that, outside the
+    # core, to skip the catchlight's own halo.
+    "fill_luma_cap_q": 0.0, "fill_luma_cap_ring": 0.1,
     # When a reflection is present, the (temporally unioned) hole on the eye surface is itself selected /
     # recoverable, so the hard support follows the track's reflection mask rather than the restorer's
     # per-frame confidence outline (which moved 13% per frame).  Off = legacy.
@@ -100,7 +110,7 @@ DEFAULT_GATE = {
 # anything but its neutral value is refused rather than silently rendered differently.
 RETIRED_GATE = {
     "fill_mode": ("network", "network_value"),          # allowed values; anything else is retired
-    "restore_input": ("source",),
+    "restore_input": ("source", "hole"),                 # "hole" reinstated in round 56 (masked-inpainting restorer)
     "value_core_source": ("hole",),
     "value_pupil_circle": (False, 0),
     "value_pupil_full_disc": (False, 0),
@@ -202,6 +212,25 @@ def crop_support(probs: torch.Tensor, out: dict, mode: str, g: dict, refl_presen
             # the two eye-level statistics, so a parameter sweep can re-apply the presence decision
             # without recomputing the masks (it only ever zeroes the whole eye)
             "area": area, "mean_corr": mean_corr}
+
+
+def cap_fill_luma(filled: torch.Tensor, ref: torch.Tensor, core: torch.Tensor, iris_px: float, q: float,
+                  ring_frac: float = 0.1, working_color: str = "linear-acescg", min_ring_px: int = 12) -> torch.Tensor:
+    """(3,H,W) working-space fill, (3,H,W) source, (H,W) bool value-fill core -> the fill with every core pixel's
+    luminance capped at the q-quantile of the source luminance in a ring around the core (gate key fill_luma_cap_q).
+    Pixels outside the core, and core pixels already under the cap, are returned unchanged.  GPU ops only."""
+    if not bool(core.any()):
+        return filled
+    w = (0.2722, 0.6741, 0.0537) if working_color == "linear-acescg" else (0.2126, 0.7152, 0.0722)
+    wt = torch.tensor(w, device=filled.device, dtype=filled.dtype).view(3, 1, 1)
+    r = max(1, int(round(ring_frac * iris_px)))
+    ring = dilate(core, 2 * r) & ~dilate(core, r)
+    if int(ring.sum()) < min_ring_px:
+        return filled
+    cap = torch.quantile((ref * wt).sum(0)[ring].float(), q)
+    lum = (filled * wt).sum(0)
+    scale = torch.where(core & (lum > cap), cap / lum.clamp(min=1e-8), torch.ones_like(lum))
+    return filled * scale[None]
 
 
 def highlight_excess(crop_w: torch.Tensor, working_color: str = "linear-acescg") -> torch.Tensor:

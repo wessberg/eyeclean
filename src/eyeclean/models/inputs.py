@@ -85,3 +85,28 @@ def hole_mask(guard_probs: torch.Tensor, thresh: float = 0.5, dilate_px: int = 2
         m = torch.nn.functional.max_pool2d(m, 2 * dilate_px + 1, stride=1, padding=dilate_px)
     return (m > 0.5).float()
 
+
+def hole_restore_input(crop_w: torch.Tensor, e: torch.Tensor, guard_probs: torch.Tensor, clipped: torch.Tensor,
+                       hole: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+    """Masked-inpainting restorer input (gate restore_input "hole"): blank the source under ``hole`` and present the
+    hole as the reflection channel.
+
+    The blank is the per-sample mean of the visible ocular region (working space, per channel) - a flat patch at the
+    eye's own level, not a black hole with a hard edge to learn around.  The clipped channel is cleared inside the
+    hole (nothing is clipped in a blank).  Returns the restorer input and the blanked crop; the residual is predicted
+    relative to the BLANKED crop, so inside the hole it has to be the whole fill.  Training and inference both build
+    their input here, so the two cannot drift apart.
+    """
+    vis = (guard_probs[:, 0:1] > 0.5).float() * (1.0 - hole)
+    fallback = (1.0 - hole)
+    num = (crop_w * vis).sum((2, 3), keepdim=True)
+    den = vis.sum((2, 3), keepdim=True)
+    num_f = (crop_w * fallback).sum((2, 3), keepdim=True)
+    den_f = fallback.sum((2, 3), keepdim=True).clamp(min=1)
+    mean = torch.where(den > 0, num / den.clamp(min=1), num_f / den_f)
+    x_h = crop_w * (1.0 - hole) + mean * hole
+    probs_h = guard_probs.clone()
+    probs_h[:, 4:5] = hole
+    clip_h = clipped * (1.0 - hole)
+    return restore_input(x_h, e, probs_h, clip_h), x_h
+

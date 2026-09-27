@@ -6,13 +6,15 @@ from pathlib import Path
 
 import pytest
 
+from eyeclean.paths import runs_dir
+
 ROOT = Path(__file__).resolve().parents[2]
 pytestmark = [pytest.mark.blender]
 
 
 def _report() -> dict | None:
     for run in ("prototype", "smoke"):
-        p = ROOT / "runs" / run / "validation" / "pair" / "pair_validation_report.json"
+        p = runs_dir() / run / "validation" / "pair" / "pair_validation_report.json"
         if p.exists():
             return json.loads(p.read_text(encoding="utf-8"))
     return None

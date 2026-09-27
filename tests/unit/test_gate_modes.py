@@ -2,7 +2,7 @@ import pytest
 import torch
 
 from eyeclean.gpu.imgops import CropTransform, dilate, inverse_warp
-from eyeclean.inference.gate import DEFAULT_GATE, check_retired, crop_support, full_res_gate, highlight_excess
+from eyeclean.inference.gate import DEFAULT_GATE, cap_fill_luma, check_retired, crop_support, full_res_gate, highlight_excess
 
 pytestmark = pytest.mark.gpu
 
@@ -219,3 +219,25 @@ def test_hole_skip_margin_2_stays_inside_the_guards_own_surface(dev):
     s1, s2 = _hard(comp, tf, box, hole_skip_margin=1), _hard(comp, tf, box, hole_skip_margin=2)
     assert not bool((s2 & ~_frame(comp["lid_surface"], tf, box) & ~_hard(comp, tf, box)).any())
     assert int(s1.sum()) >= int(s2.sum())
+
+
+def test_fill_luma_cap_defaults_off():
+    assert DEFAULT_GATE["fill_luma_cap_q"] == 0.0
+
+
+def test_fill_luma_cap_only_darkens_core_pixels_brighter_than_the_ring(dev):
+    S = 96
+    ref = torch.full((3, S, S), 0.10, device=dev)                  # the surrounding eye
+    core = torch.zeros(S, S, dtype=torch.bool, device=dev)
+    core[40:56, 40:56] = True
+    filled = ref.clone()
+    filled[:, 40:48, 40:56] = torch.tensor([0.6, 0.5, 0.4], device=dev).view(3, 1, 1)   # a fill left too bright
+    filled[:, 48:56, 40:56] = 0.05                                                       # a fill darker than the eye
+    out = cap_fill_luma(filled, ref, core, iris_px=60.0, q=0.9)
+    w = torch.tensor((0.2722, 0.6741, 0.0537), device=dev).view(3, 1, 1)
+    lum = (out * w).sum(0)
+    assert float(lum[40:48, 40:56].max()) <= 0.10 + 1e-5, "bright fill pixels are capped at the ring's level"
+    ratio = out[:, 44, 44] / out[1, 44, 44]
+    assert torch.allclose(ratio, torch.tensor([1.2, 1.0, 0.8], device=dev), atol=1e-4), "colour ratios are kept"
+    assert bool((out[:, 48:56, 40:56] == filled[:, 48:56, 40:56]).all()), "darker fill pixels are untouched"
+    assert bool((out[:, ~core] == filled[:, ~core]).all()), "nothing outside the core changes"

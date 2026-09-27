@@ -18,6 +18,9 @@ are) and `docs/APPROACH.md` (why they are that way).
 - **Acceptance thresholds** (`contracts/acceptance.yaml`) are never relaxed to make a result pass.
 - **Honest reporting.**  Never fabricate weights, measurements or footage results.  State failures as plainly as
   wins.
+- **Working outputs go to the RUNS directory**, never to a hard-coded `runs/`.  Find it with
+  `eyeclean.paths.runs_dir()`.  The default is `runs/` in the checkout; `EYECLEAN_RUNS` or `"runs_dir"` in
+  `.eyeclean-local.json` (untracked) move it.
 
 ## Commands
 

@@ -22,7 +22,9 @@ def tmp(tmp_path):
 
 
 def smoke_checkpoint() -> Path | None:
-    for p in (ROOT / "runs" / "prototype" / "checkpoints" / "best.safetensors", ROOT / "runs" / "smoke" / "checkpoints" / "best.safetensors"):
+    from eyeclean.paths import runs_dir
+    runs = runs_dir()
+    for p in (runs / "prototype" / "checkpoints" / "best.safetensors", runs / "smoke" / "checkpoints" / "best.safetensors"):
         if p.exists():
             return p
     from eyeclean.models.registry import load_registry, locate   # Round 52: the installed default model
