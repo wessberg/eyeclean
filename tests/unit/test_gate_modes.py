@@ -161,7 +161,9 @@ def test_retired_gate_settings_are_refused():
     """Bundles that ask for a fill retired in 0.3.0 must fail loudly, never render differently."""
     check_retired(dict(DEFAULT_GATE))
     check_retired(dict(DEFAULT_GATE, fill_mode="network_value", membrane_pupil_aware=0, pupil_fit_mode="visible_boundary"))
-    for bad in ({"fill_mode": "membrane_core"}, {"fill_mode": "polar_copy"}, {"restore_input": "hole"},
+    # restore_input "hole" (a masked-inpainting restorer) was reinstated in 0.4.0 and is accepted again
+    check_retired(dict(DEFAULT_GATE, restore_input="hole"))
+    for bad in ({"fill_mode": "membrane_core"}, {"fill_mode": "polar_copy"}, {"restore_input": "masked"},
                 {"value_pupil_circle": True}, {"fill_temporal_window": 2}, {"value_core_source": "excess"}):
         try:
             check_retired(dict(DEFAULT_GATE, **bad))
