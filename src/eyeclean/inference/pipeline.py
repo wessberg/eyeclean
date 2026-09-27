@@ -348,6 +348,7 @@ class Pipeline:
             comp["recoverable"] = comp["recoverable"] | hs
             comp["editable"] = comp["editable"] | hs
             comp["abstained"] = comp["selected"] & ~comp["editable"]
+        comp["hole"] = (hole > 0.5) if hole is not None else None  # read by full_res_gate's hole_skip_margin only
         info = {"reflection_present": comp["reflection_present"],
                 "by_track_hysteresis": bool(comp["reflection_present"] and not comp["strict_present"])}
         membrane_native = None

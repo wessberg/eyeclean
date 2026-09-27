@@ -67,6 +67,17 @@ DEFAULT_GATE = {
     # (0 = off).  The top rows of a catchlight lying against the upper lid read as neither iris nor pupil
     # to the guard and were left unedited.  Sclera glints away from the iris stay excluded.
     "hole_iris_relax_px": 0,
+    # Take the lid margin (erode_frac / erode_min_crop_px) from the lid side of the surface only (0 = off, legacy).
+    # The margin is there for the guard's boundary error at the lids.  Eroding the iris-only surface as a whole also
+    # erodes it at the limbus, where no lid is: a catchlight that reaches the iris edge keeps its outer band, and the
+    # erosion undoes hole_iris_relax_px.  On: the ocular-minus-protected surface is eroded, then the iris-only
+    # surface is applied unchanged.  crop margin_space only.
+    "margin_lid_only": 0,
+    # Exempt the hole from the lid margin (0 = off, legacy).  At photo scale the margin (7 crop px at a 93 px crop
+    # iris) exceeds hole_lid_margin_px, so a catchlight lying against a lid keeps its lid-side band even though the
+    # hole covers it.  1: hole pixels on the surface keep their full extent (including the hole_lid_margin_px
+    # admissions).  2: only hole pixels inside the guard's own ocular-minus-protected surface.  crop margin_space only.
+    "hole_skip_margin": 0,
     # When a reflection is present, the (temporally unioned) hole on the eye surface is itself selected /
     # recoverable, so the hard support follows the track's reflection mask rather than the restorer's
     # per-frame confidence outline (which moved 13% per frame).  Off = legacy.
@@ -140,6 +151,7 @@ def crop_support(probs: torch.Tensor, out: dict, mode: str, g: dict, refl_presen
     conf = torch.sigmoid(out["conf"][0].float())
     synth = torch.sigmoid(out["synth"][0].float()) > g["synth_thresh"]
     surface = ocular & ~protected
+    lid_surface = surface
     iot = float(g.get("iris_only_thresh", 0.0))
     if iot > 0.0:
         on_iris = (probs[1] > iot) | (probs[2] > iot)
@@ -186,7 +198,7 @@ def crop_support(probs: torch.Tensor, out: dict, mode: str, g: dict, refl_presen
     return {"surface": surface, "selected": selected, "recoverable": recoverable, "synth": synth_sel if mode == "hybrid" else torch.zeros_like(synth_sel),
             "abstained": selected & ~editable, "editable": editable if present_refl else torch.zeros_like(editable),
             "conf": conf, "reflection_present": present_refl, "strict_present": strict_present,
-            "synth_head": selected & synth, "protected": protected,
+            "synth_head": selected & synth, "protected": protected, "lid_surface": lid_surface,
             # the two eye-level statistics, so a parameter sweep can re-apply the presence decision
             # without recomputing the masks (it only ever zeroes the whole eye)
             "area": area, "mean_corr": mean_corr}
@@ -240,9 +252,19 @@ def full_res_gate(comp: dict, tf: CropTransform, box: tuple[int, int, int, int],
             mc = max(int(g.get("erode_min_crop_px_small", 4)), int(round(float(g.get("erode_frac_small", 0.0)) * iris_c)))
             rc = min(rc, mc)
         surf_c = comp["surface"]
+        lid_c = comp.get("lid_surface") if int(g.get("margin_lid_only", 0)) else None
         if pd > 0 and "protected" in comp:
-            surf_c = surf_c & ~dilate(comp["protected"], max(1, int(round(pd * tf.scale))))
-        surf_ec = erode(surf_c, mc)
+            pdm = dilate(comp["protected"], max(1, int(round(pd * tf.scale))))
+            surf_c = surf_c & ~pdm
+            lid_c = lid_c & ~pdm if lid_c is not None else None
+        # lid_c | surf_c: the pipeline may admit hole pixels next to the lids into the surface after crop_support
+        surf_ec = erode(surf_c, mc) if lid_c is None else erode(lid_c | surf_c, mc) & surf_c
+        hsm = int(g.get("hole_skip_margin", 0))
+        if hsm and comp.get("hole") is not None:
+            keep = comp["hole"] & surf_c
+            if hsm == 2 and "lid_surface" in comp:
+                keep = keep & comp["lid_surface"]
+            surf_ec = surf_ec | keep
         ed_c = comp["editable"] & surf_ec
         a_c = feather_inside(surf_ec if fmode == "surface" else ed_c, rc)
         w = inverse_warp(torch.stack([ed_c.float(), surf_ec.float(), comp["synth"].float(), 1 - comp["conf"],

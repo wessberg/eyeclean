@@ -9,5 +9,5 @@ uv run eyeclean models              # what is installed, and where EyeClean look
 ```
 
 The registry (`src/eyeclean/models/registry.json`) pins each model's file name and SHA-256, and says how to run it.
-See [MODEL_CARD.md](../MODEL_CARD.md) for the default model, `eyeclean-r54`.  The previous default, `eyeclean-r48`, stays in the
-registry: select it with `--model eyeclean-r48`.
+See [MODEL_CARD.md](../MODEL_CARD.md) for the default model, `eyeclean-r56`.  The earlier defaults, `eyeclean-r54` and `eyeclean-r48`, stay in
+the registry: select one with `--model eyeclean-r54`.

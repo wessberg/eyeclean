@@ -1,7 +1,18 @@
 {
  "schema": "eyeclean.models/1",
- "default": "eyeclean-r54",
+ "default": "eyeclean-r56",
  "models": {
+  "eyeclean-r56": {
+   "file": "eyeclean-r56.safetensors",
+   "sha256": "b1a3a7fc0d30372d408de83b6926c3088f3befcb2713b6497c72af44bc7d6979",
+   "bytes": 238512708,
+   "restore_mode": "single",
+   "promoted": "2026-09-26",
+   "license": "MIT",
+   "url": null,
+   "description": "eyeclean-r54 with EyeGuard fine-tuned for recall on the catchlight (distilled to its round-54 self elsewhere) and the reflection hole exempt from the lid margin; same presence classifier and EyeRestoreTX (57.5M); see MODEL_CARD.md",
+   "input_note": "any input colour EyeClean supports; tested on 1080p Rec.709 video, linear Rec.709 EXR and phone JPEG photos"
+  },
   "eyeclean-r54": {
    "file": "eyeclean-r54.safetensors",
    "sha256": "bfdca4a272f1ae544d1f13aa67a50af18742444c39e4619eddb95c253c6c5874",

@@ -1,7 +1,7 @@
 import pytest
 import torch
 
-from eyeclean.gpu.imgops import CropTransform
+from eyeclean.gpu.imgops import CropTransform, dilate, inverse_warp
 from eyeclean.inference.gate import DEFAULT_GATE, check_retired, crop_support, full_res_gate, highlight_excess
 
 pytestmark = pytest.mark.gpu
@@ -168,3 +168,54 @@ def test_retired_gate_settings_are_refused():
         except ValueError:
             continue
         raise AssertionError(f"{bad} was accepted")
+
+
+def _margin_inputs(dev, S: int = 256):
+    """A crop-space eye: the lid-side surface (ocular minus protected) is a band, the iris-only surface a disk inside it
+    that touches the band's lower edge, and a hole (the catchlight) sits against that lid edge."""
+    yy, xx = torch.meshgrid(torch.arange(S, device=dev), torch.arange(S, device=dev), indexing="ij")
+    lid = (yy >= 60) & (yy < 190) & (xx >= 20) & (xx < 236)
+    iris = ((yy - 125) ** 2 + (xx - 128) ** 2) < 70 ** 2
+    surf = lid & iris
+    hole = ((yy - 180) ** 2 + (xx - 128) ** 2) < 14 ** 2
+    comp = {"surface": surf, "lid_surface": lid, "editable": surf.clone(), "synth": torch.zeros_like(surf),
+            "conf": torch.ones(S, S, device=dev), "selected": surf.clone(), "abstained": torch.zeros_like(surf),
+            "protected": torch.zeros_like(surf), "hole": hole}
+    tf = CropTransform(300.0, 300.0, 1.0, 0.0, S)
+    return comp, tf, tf.frame_box(600, 600)
+
+
+def _frame(mask, tf, box):
+    return inverse_warp(mask.float()[None], tf, box)[0] > 0.5
+
+
+def _hard(comp, tf, box, **over):
+    g = dict(DEFAULT_GATE, margin_space="crop", erode_frac=0.07, erode_min_crop_px=4, feather_frac=0.0, feather_min_crop_px=1)
+    g.update(over)
+    return full_res_gate(comp, tf, box, 93.0, g, None)["hard"]
+
+
+def test_new_margin_keys_default_off_and_change_nothing(dev):
+    """Round 56: margin_lid_only / hole_skip_margin default to 0, and at 0 the support is the legacy one exactly."""
+    assert DEFAULT_GATE["margin_lid_only"] == 0 and DEFAULT_GATE["hole_skip_margin"] == 0
+    comp, tf, box = _margin_inputs(dev)
+    legacy = {k: v for k, v in comp.items() if k not in ("lid_surface", "hole")}
+    assert bool((_hard(comp, tf, box) == _hard(legacy, tf, box)).all())
+
+
+def test_hole_skip_margin_restores_the_hole_only_on_the_surface(dev):
+    comp, tf, box = _margin_inputs(dev)
+    base, skip = _hard(comp, tf, box), _hard(comp, tf, box, hole_skip_margin=1)
+    assert int(skip.sum()) > int(base.sum()), "the hole's lid-side band should come back"
+    assert not bool((skip & ~_frame(comp["surface"], tf, box)).any()), "the support must never leave the surface"
+    # one pixel of tolerance: the union and the hole are warped separately, so a hole-edge pixel can pass 0.5 in one only
+    assert not bool((skip & ~base & ~dilate(_frame(comp["hole"], tf, box), 1)).any()), "only hole pixels may be added"
+
+
+def test_hole_skip_margin_2_stays_inside_the_guards_own_surface(dev):
+    comp, tf, box = _margin_inputs(dev)
+    comp["surface"] = comp["surface"] | comp["hole"]          # a hole_lid_margin_px admission past the lid edge
+    comp["editable"] = comp["surface"].clone()
+    s1, s2 = _hard(comp, tf, box, hole_skip_margin=1), _hard(comp, tf, box, hole_skip_margin=2)
+    assert not bool((s2 & ~_frame(comp["lid_surface"], tf, box) & ~_hard(comp, tf, box)).any())
+    assert int(s1.sum()) >= int(s2.sum())

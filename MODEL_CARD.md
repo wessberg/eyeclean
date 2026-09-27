@@ -1,18 +1,21 @@
-# Model card: `eyeclean-r54`
+# Model card: `eyeclean-r56`
 
 | | |
 |---|---|
-| file | `eyeclean-r54.safetensors`, 238.5 MB, FP32 |
-| SHA-256 | `bfdca4a272f1ae544d1f13aa67a50af18742444c39e4619eddb95c253c6c5874` |
+| file | `eyeclean-r56.safetensors`, 238.5 MB, FP32 |
+| SHA-256 | `b1a3a7fc0d30372d408de83b6926c3088f3befcb2713b6497c72af44bc7d6979` |
 | licence | MIT (see Licences below) |
-| promoted | 2026-09-26, on a human review of lossless stills from a full real clip, CG and iris images (development round 55) |
+| promoted | 2026-09-26, on a human review of lossless A/B stills (phone photos, CG and iris images; development round 56), over two failed development checks (see Evaluation) |
 | get it | `eyeclean models --fetch` (verifies the SHA-256), or download it from the release page into a model folder |
 | run with | `eyeclean process` (the registry sets `restore_mode single`); gate calibration is inside the bundle |
 | components | EyeGuard 1.78M · presence classifier 0.34M · EyeRestoreTX 57.5M |
 
-It is the previous default, `eyeclean-r48` (SHA-256 `1505f69d…`, still in the registry), with EyeGuard and the
-presence classifier fine-tuned across iris sizes from 8 to 160 px.  The restorer's tensors are identical.  The change
-targets close-up photos, where `eyeclean-r48` missed many catchlights.
+It is the previous default, `eyeclean-r54` (SHA-256 `bfdca4a2…`, still in the registry), with EyeGuard fine-tuned to
+mark more of the catchlight.  The fine-tune is distilled to r54's guard everywhere else, so its other outputs stay
+close to r54's.  The gate lets the reflection hole reach a lid edge.  The presence classifier, its threshold and the
+restorer are r54's, byte for byte.  The change targets close-ups and photos, where catchlights were often only
+partly removed.  `eyeclean-r54` itself is `eyeclean-r48` (SHA-256 `1505f69d…`) with the guard and presence classifier
+fine-tuned across iris sizes; both remain in the registry.
 
 ## What it does
 
@@ -35,17 +38,22 @@ targets close-up photos, where `eyeclean-r48` missed many catchlights.
 
 1. **EyeGuard and the presence classifier:** trained on the synthetic CG bank (round 19), then fine-tuned from those
    weights with eye crops resampled to iris diameters of 8-160 px (round 54).
-   - EyeGuard: 6,000 steps at batch 16; the final EMA weights are used, with no checkpoint selection.
-   - Presence classifier: 3,000 steps at batch 16; the checkpoint with the best validation detection at <= 1% false
-     alarms is kept.
+   - EyeGuard (round 54): 6,000 steps at batch 16; the final EMA weights are used, with no checkpoint selection.
+   - Presence classifier (round 54): 3,000 steps at batch 16; the checkpoint with the best validation detection at
+     <= 1% false alarms is kept.  Unchanged since.
+   - EyeGuard again (round 56): 4,000 steps at batch 16 on the same data.  The loss adds a recall term on the
+     reflection channel (Tversky, weighting misses 0.6 against false marks 0.4, at 0.3) and distillation to the
+     round-54 guard everywhere except the catchlight (weight 1.0).  Final EMA weights.
 2. **EyeRestoreTX:** trained for 10,000 updates on a 50/50 mix of CG pairs and generated iris images (round 22).
    - The targets remove only the designated catchlight.
    - Two invariance fine-tunes followed, on two-frame CG pseudo-clips (round 45: 3,000 updates; round 46: 2,000
      updates at consistency weight 10).
    - The loss penalises how much the restorer's *error* changes between frames that differ only in sampling phase,
      noise, codec and tracker jitter.
-3. **Gate:** inherited from `best_single_r43` through `eyeclean-r48`, with one change: the presence threshold is the
-   new classifier's validation 1%-false-alarm threshold (0.624).
+3. **Gate:** inherited from `best_single_r43` through `eyeclean-r48`, with two changes:
+   - the presence threshold is the round-54 classifier's validation 1%-false-alarm threshold (0.624);
+   - `hole_skip_margin: 2` (round 56): inside the guard's own eye surface, the reflection hole is exempt from the
+     lid margin, so a catchlight lying against a lid is filled to its edge.
    - The restorer input is softened by 0.5 native px.
    - The reflection mask is a temporal union over ±2 frames, and presence hysteresis is on (round 24).
 
@@ -64,23 +72,39 @@ targets close-up photos, where `eyeclean-r48` missed many catchlights.
 
 **One real shot: the development shot.**
 - The footage: 1,200 frames, 1080p 59.94, Rec.709, one presenter in front of a softbox, irises about 12 px across.
-- **The same shot selected `eyeclean-r48`'s restorer checkpoint and tuned its gate.**  `eyeclean-r54`'s guard and
-  presence fine-tune was trained and selected on CG only.  These are still development results, not a held-out test.
-- Preservation: 0 bits changed outside the support on all 1,200 frames.  Eyes were edited on 1,134 frames (2,229
-  eye-frames repaired; `eyeclean-r48`: 1,149 frames, 2,234 eye-frames).
-- Temporal stability: measured against a hand-made reference fix of the same shot, it removes 77.6% / 88.7% (two
-  scorers) of the excess frame-to-frame change of its predecessor (`eyeclean-r48`: 78.4% / 87.2%).
-- The brightness, texture and damage guards pass.  **The colour guard does not:**
-  - inside the catchlight, the fill's colour distance to the hand-made reference is 1.34x / 1.53x the baseline's,
-    against a limit of 1.25x (`eyeclean-r48`: 1.0x);
-  - in display terms the fill is about one 8-bit level darker and slightly cooler than `eyeclean-r48`'s (per pixel,
-    median difference 1.4 levels; 99th percentile 16);
-  - the owners promoted it over this check after reviewing lossless stills.
-- On blinks it does not grey out the bright sclera under the lid in the frames where `eyeclean-r48` did.  Two of the
-  three frames where the two models differ most are such blinks.
-- Human review, against `eyeclean-r48` on lossless stills: "clearly better".
+- **The same shot selected `eyeclean-r48`'s restorer checkpoint and tuned its gate.**  The round-54 and round-56
+  guard fine-tunes were trained and selected on CG only.  These are still development results, not a held-out test.
+- Preservation: 0 bits changed outside the support on all 1,200 frames.  Eyes were edited on 1,138 frames
+  (2,232 eye-frames repaired; `eyeclean-r54`: 1,134 frames, 2,229 eye-frames).
+- Temporal stability: measured against a hand-made reference fix of the same shot, it removes 77.7% / 89.6% (two
+  scorers) of the excess frame-to-frame change of its predecessor (`eyeclean-r54`: 77.6% / 88.7%; `eyeclean-r48`:
+  78.4% / 87.2%).
+- The brightness, texture and damage guards pass.  **The colour guard does not, as for `eyeclean-r54`:**
+  - inside the catchlight, the fill's colour distance to the hand-made reference is 1.32x / 1.51x the baseline's,
+    against a limit of 1.25x (`eyeclean-r54`: 1.34x / 1.53x; `eyeclean-r48`: 1.0x);
+  - `eyeclean-r54`'s fill measured about one 8-bit level darker and slightly cooler than `eyeclean-r48`'s.  The owners
+    promoted r54 over this check after reviewing lossless stills.
+- On blinks, `eyeclean-r54` stopped greying out the bright sclera under the lid in the frames where `eyeclean-r48` did.
+- Human review, against `eyeclean-r54` on lossless A/B stills: "I think g4b is better, so let's promote it".  It
+  removes a remnant `eyeclean-r54` left on one of three real phone photos.
 
-**Held-out synthetic tests, against `eyeclean-r48`** (identical samples; the error reduction is over the whole eye):
+**Held-out synthetic tests, `eyeclean-r54` -> `eyeclean-r56`** (identical samples).  Removal is the share of the
+catchlight's error removed, counting missed eyes as 0.  "Still visible" is the share of catchlight pixels left more
+than 0.03 brighter (display luma) than the truth:
+
+| set | catchlights detected | removal | still visible | clean eyes edited |
+|---|---|---|---|---|
+| CG, close-up scale (iris 60-150 px; 250 catchlight / 250 clean eyes) | 75.6% -> 84.4% | 0.461 -> 0.522 | 57.9% -> 52.5% | 10% -> **19.6%** |
+| CG, development-shot scale (iris 12-36 px; 162 / 250) | 58.0% -> 74.7% | 0.305 -> 0.341 | 70.7% -> 67.5% | 1.2% -> **6.0%** |
+| iris images (298 / 102) | 76.2% -> 82.2% | 0.465 -> 0.572 | 57.9% -> 49.0% | 1.0% -> **5.9%** |
+
+- **Two development checks failed, and the owners promoted it over them:**
+  - more clean eyes get some edit (above).  In a review of such eyes, most edits were invisible; one CG eye showed
+    a darker smudge over the pupil at 6x;
+  - more error on the eye next to the catchlight: on CG close-ups, the whole-eye error reduction fell from 0.190 to
+    0.097.
+
+**Earlier step, `eyeclean-r48` -> `eyeclean-r54`** (round 54 samples; the error reduction is over the whole eye):
 
 | set | catchlights detected | error reduction | clean eyes edited |
 |---|---|---|---|
@@ -106,14 +130,15 @@ memory.
 **It has been validated on one real shot.**  Test on your own footage before relying on it.
 
 **Close-up photos are still a weak spot.**  At the scale of a phone close-up (irises of roughly 60–150 px):
-- on held-out CG it detects about 74% of catchlights;
-- it removes about 44% of each catchlight on average (counting misses as 0), and 80% or more of it on only about 15%
-  of eyes;
+- on held-out CG it detects about 84% of catchlights and removes about half of each catchlight on average (counting
+  misses as 0); only about a quarter of eyes get 80% or more removed;
 - large, soft glare over a pale iris is removed only in part.  The repair can stop inside the glare and leave a
   visible edge;
-- on three real close-up phone photos it repaired all four catchlight eyes; one keeps a visible remnant.
+- on three real close-up phone photos it repaired all four catchlight eyes.
 
-When it misses, it leaves the eye untouched rather than damaging it.  Improving removal is ongoing work.
+**More false edits than `eyeclean-r54`:** on held-out sets it edits some pixels of 6-20% of eyes that have no
+catchlight (r54: 1-10%).  Most such edits were invisible in review; one showed a darker smudge over the pupil.
+Improving removal without them is ongoing work.
 
 **Seen on the development shot:**
 - **Softness:** the rebuilt pupil and iris are softer than the real ones around them.

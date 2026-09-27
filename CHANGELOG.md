@@ -17,7 +17,17 @@
 
 ### Changed
 
-- **The default model is `eyeclean-r54`**, 238.5 MB, MIT (see MODEL_CARD.md).
+- **The default model is `eyeclean-r56`**, 238.5 MB, MIT (see MODEL_CARD.md).
+  - It is `eyeclean-r54` (below) with EyeGuard fine-tuned to mark more of each catchlight, distilled to r54's guard
+    everywhere else.  The gate lets the reflection hole reach a lid edge (`hole_skip_margin: 2`).  Presence
+    classifier and restorer are identical.
+  - On held-out sets it detects and removes more: iris images 76% -> 82% detected, removal 0.47 -> 0.57; CG
+    close-ups 76% -> 84%, 0.46 -> 0.52.  It removes a remnant r54 left on a real phone photo.
+  - Trade-off: it edits some pixels of more eyes that have no catchlight (6-20% against 1-10%), mostly invisibly.
+    The owners promoted it over that development check after reviewing lossless stills.
+  - `eyeclean-r54` and `eyeclean-r48` stay in the registry.
+- New gate keys, both off by default: `margin_lid_only` and `hole_skip_margin` (`eyeclean.inference.gate`).
+- **Earlier the same release cycle, `eyeclean-r54`** became the default, 238.5 MB, MIT.
   - It is `eyeclean-r48` with EyeGuard and the presence classifier fine-tuned across iris sizes of 8-160 px; the
     restorer is identical.
   - On close-up photos it detects many more catchlights: on held-out CG, 55% -> 74%; on three real phone photos,

@@ -56,8 +56,11 @@ It must print **CLEAN** before every commit.  Reviewed exceptions are listed, wi
 - [x] Release bundle `eyeclean-r54.safetensors` (238.5 MB), the default since 2026-09-26: `eyeclean-r48` with the
       guard and presence classifier fine-tuned across iris sizes; the restorer tensors are identical.  Its own registry
       entry; a byte-exact ruler against the promoted development file on the full development clip.
-- [ ] Upload `eyeclean-r54.safetensors` (and, optionally, `eyeclean-r48.safetensors`) as release assets on the first
-      public tag.  Set each `url` in the registry, commit, and check `eyeclean models --fetch` on a clean machine.
+- [x] Release bundle `eyeclean-r56.safetensors` (238.5 MB), the default since 2026-09-26 (later the same day as
+      r54): r54 with the guard fine-tuned for recall and the hole exempt from the lid margin; presence and restorer
+      identical.  Its own registry entry; the full development clip re-rendered with it as the reference.
+- [ ] Upload `eyeclean-r56.safetensors` (and, optionally, `eyeclean-r54` / `eyeclean-r48`) as release assets on the
+      first public tag.  Set each `url` in the registry, commit, and check `eyeclean models --fetch` on a clean machine.
 - [ ] A fresh clone on a clean machine: `bootstrap`, `eyeclean models --fetch`, `pytest`, one `eyeclean process`.
 - [ ] Linux: bootstrap and tests (untested so far).
 - [ ] README renders on GitHub: SVGs and relative links.

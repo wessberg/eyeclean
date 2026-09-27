@@ -54,7 +54,7 @@ because judging that has been most of the work.
 ```powershell
 git clone <repo> eyeclean; cd eyeclean
 ./bootstrap.ps1                                   # uv sync --frozen, face-detector weights, quick doctor (Linux: ./bootstrap.sh)
-uv run eyeclean models --fetch                    # the default model, eyeclean-r54 (239 MB), SHA-256 verified
+uv run eyeclean models --fetch                    # the default model, eyeclean-r56 (239 MB), SHA-256 verified
 ```
 
 **A photo** (JPEG, PNG, WebP, TIFF, ...; any size; colour and orientation are read from the file):
@@ -175,7 +175,7 @@ More: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Licence
 
-- **MIT:** EyeClean's code and documentation, and the released model weights (`eyeclean-r54`, and `eyeclean-r48` before it).  See [LICENSE](LICENSE).
+- **MIT:** EyeClean's code and documentation, and the released model weights (`eyeclean-r56`, and `eyeclean-r54` / `eyeclean-r48` before it).  See [LICENSE](LICENSE).
 - **GPL-3.0-or-later:** the Blender data-generation scripts (`blender/`), because they drive MPFB.
 - **Third-party assets and weights** carry their own terms: the face-detector weights, fetched at install; the iris
   dataset the model was trained on.  See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and
