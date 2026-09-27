@@ -1,7 +1,18 @@
 {
  "schema": "eyeclean.models/1",
- "default": "eyeclean-r56",
+ "default": "eyeclean-r56b",
  "models": {
+  "eyeclean-r56b": {
+   "file": "eyeclean-r56b.safetensors",
+   "sha256": "b725366ef2ea3778631892bcbc67270dc09e99721f2ff1069a8a7978f27fa79d",
+   "bytes": 238512708,
+   "restore_mode": "single",
+   "promoted": "2026-09-27",
+   "license": "MIT",
+   "url": null,
+   "description": "eyeclean-r56 with EyeGuard's reflection channel also trained on iris-bank images (better removal of large, soft glare on close-ups and photos); same presence classifier, EyeRestoreTX (57.5M) and gate; see MODEL_CARD.md",
+   "input_note": "any input colour EyeClean supports; tested on 1080p Rec.709 video, linear Rec.709 EXR and phone JPEG photos"
+  },
   "eyeclean-r56": {
    "file": "eyeclean-r56.safetensors",
    "sha256": "b1a3a7fc0d30372d408de83b6926c3088f3befcb2713b6497c72af44bc7d6979",

@@ -17,7 +17,16 @@
 
 ### Changed
 
-- **The default model is `eyeclean-r56`**, 238.5 MB, MIT (see MODEL_CARD.md).
+- **The default model is `eyeclean-r56b`**, 238.5 MB, MIT (see MODEL_CARD.md).
+  - It is `eyeclean-r56` (below) with EyeGuard's reflection channel also trained on the iris image bank.  Presence
+    classifier, restorer and gate are identical.
+  - It removes large, soft glare much better: iris images removal 0.57 -> 0.64; a large glare on a pale iris
+    0.70 -> 0.77, with visible catchlight pixels 53% -> 27%.
+  - Trade-offs: small wet-eye sparkles on the sclera next to a lid are often removed too.  A few CG eyes get
+    small edits outside the iris.  Development-shot texture 0.896 against a 0.90 limit.  The owners promoted it over
+    these after reviewing stills.
+  - `eyeclean-r56`, `eyeclean-r54` and `eyeclean-r48` stay in the registry.
+- **Earlier the same release cycle, `eyeclean-r56`** became the default.
   - It is `eyeclean-r54` (below) with EyeGuard fine-tuned to mark more of each catchlight, distilled to r54's guard
     everywhere else.  The gate lets the reflection hole reach a lid edge (`hole_skip_margin: 2`).  Presence
     classifier and restorer are identical.
