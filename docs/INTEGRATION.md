@@ -52,7 +52,6 @@ uv run eyeclean models               # where models are looked for, and which ar
 - **Requirements:**
   - an NVIDIA GPU with a CUDA 13 driver and about 4 GB of free memory;
   - NVDEC for video input.
-  - It is developed and tested on Windows 11 with an RTX 5080.  Linux is untested.
   - There is no CPU path.
 
 ## 3. The job (`eyeclean.job/1`)

@@ -163,7 +163,7 @@ More: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 ## Requirements
 
 - An NVIDIA GPU with a CUDA 13 driver and about 4 GB free.
-  - Developed on an RTX 5080.  Other GPUs the CUDA 13 PyTorch build supports should work, but are untested.
+  - Other GPUs the CUDA 13 PyTorch build supports should work.
 - Windows 11 (tested).  Linux (untested).
 - [`uv`](https://docs.astral.sh/uv/).
 - Blender ≥ 5.2 is needed only to generate training data (`./bootstrap.ps1 -Training`), not to process footage.

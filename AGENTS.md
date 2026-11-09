@@ -1,6 +1,6 @@
 # Notes for coding agents
 
-EyeClean removes studio-light reflections from eyes in video on an NVIDIA GPU, and leaves every pixel outside a
+EyeClean removes studio-light reflections from eyes in video, and leaves every pixel outside a
 small hard support bit-identical to the source.  Start with `README.md`, then `docs/ARCHITECTURE.md` (where things
 are) and `docs/APPROACH.md` (why they are that way).
 
