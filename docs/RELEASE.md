@@ -62,7 +62,11 @@ It must print **CLEAN** before every commit.  Reviewed exceptions are listed, wi
 - [x] Release bundle `eyeclean-r56b.safetensors` (238.5 MB), the default since 2026-09-27: r56 with the guard's
       reflection channel also trained on iris-bank images; presence, restorer and gate identical.  Its own registry
       entry; a byte-exact ruler against the approved development render on the full development clip.
-- [ ] Upload `eyeclean-r56b.safetensors` (and, optionally, the earlier `eyeclean-r56` / `eyeclean-r54` /
+- [x] Release bundle `eyeclean-r57.safetensors` (461.6 MB), the default since 2026-09-28: r56b with GuardTX, a
+      57.5M transformer detector initialised from the restorer, in place of EyeGuard; presence, restorer and gate
+      identical.  Needs EyeClean 0.4.0 or later (`model.guard_arch: "tx"`).  Its own registry entry; a byte-exact ruler
+      against the approved development render on the full development clip.
+- [ ] Upload `eyeclean-r57.safetensors` (and, optionally, the earlier `eyeclean-r56b` / `eyeclean-r56` / `eyeclean-r54` /
       `eyeclean-r48`) as release assets on the first public tag.  Set each `url` in the registry, commit, and check `eyeclean models --fetch` on a clean machine.
 - [ ] A fresh clone on a clean machine: `bootstrap`, `eyeclean models --fetch`, `pytest`, one `eyeclean process`.
 - [ ] Linux: bootstrap and tests (untested so far).

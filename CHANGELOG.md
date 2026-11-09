@@ -24,7 +24,17 @@
 
 ### Changed
 
-- **The default model is `eyeclean-r56b`**, 238.5 MB, MIT (see MODEL_CARD.md).
+- **The default model is `eyeclean-r57`**, 461.6 MB, MIT (see MODEL_CARD.md).
+  - It is `eyeclean-r56b` (below) with a transformer detector: GuardTX, 57.5M parameters with the restorer's
+    architecture and initialised from its weights, replaces the EyeGuard CNN (1.78M).  Presence classifier, restorer
+    and gate are identical.  It needs this release: the bundle's `model.guard_arch` is `"tx"`.
+  - It detects more catchlights and removes more of each, with less damage around them: iris images detected
+    86% -> 92%, removal 0.64 -> 0.69; CG close-ups 0.52 -> 0.55, with the damage on the sclera and lids down by
+    a quarter to a third.  The development shot's texture check now passes.
+  - Trade-offs: about 1.4-1.8x the time per eye.  On iris images more eyes without a catchlight get some small edit
+    (9 of 102 against 5).  The owners promoted it over that check after reviewing stills.
+  - `eyeclean-r56b` and the earlier models stay in the registry.
+- **Earlier the same release cycle, `eyeclean-r56b`** became the default, 238.5 MB.
   - It is `eyeclean-r56` (below) with EyeGuard's reflection channel also trained on the iris image bank.  Presence
     classifier, restorer and gate are identical.
   - It removes large, soft glare much better: iris images removal 0.57 -> 0.64; a large glare on a pale iris
@@ -43,6 +53,10 @@
     The owners promoted it over that development check after reviewing lossless stills.
   - `eyeclean-r54` and `eyeclean-r48` stay in the registry.
 - New gate keys, both off by default: `margin_lid_only` and `hole_skip_margin` (`eyeclean.inference.gate`).
+- New gate key `hole_source`, off by default (`"guard"`): `"union"` adds the restorer's support map to the guard's
+  reflection channel (research; no shipped model uses it).
+- **Bundles can hold a transformer guard:** `model.guard_arch: "tx"` builds `eyeclean.models.guard_tx.GuardTX`;
+  absent or `"cnn"` builds EyeGuard as before.
 - **Earlier the same release cycle, `eyeclean-r54`** became the default, 238.5 MB, MIT.
   - It is `eyeclean-r48` with EyeGuard and the presence classifier fine-tuned across iris sizes of 8-160 px; the
     restorer is identical.

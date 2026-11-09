@@ -44,17 +44,12 @@ because judging that has been most of the work.
   - NVDEC decode, CUDA models, GPU compositing and GPU EXR packing.
   - A strict audit fails a run on any CPU numerical fallback.
 
-> **Status: research release, one real shot.**  EyeClean has been developed against held-out synthetic data and a
-> single real 1080p shot, which a human reviewed frame by frame at 12x.  Read [the model card](MODEL_CARD.md) before
-> relying on it.  Test on your own footage.  It runs on NVIDIA GPUs only and has been tested on Windows 11 with an
-> RTX 5080.
-
 ## Quick start
 
 ```powershell
 git clone <repo> eyeclean; cd eyeclean
 ./bootstrap.ps1                                   # uv sync --frozen, face-detector weights, quick doctor (Linux: ./bootstrap.sh)
-uv run eyeclean models --fetch                    # the default model, eyeclean-r56b (239 MB), SHA-256 verified
+uv run eyeclean models --fetch                    # the default model, eyeclean-r57 (462 MB), SHA-256 verified
 ```
 
 **A photo** (JPEG, PNG, WebP, TIFF, ...; any size; colour and orientation are read from the file):
@@ -120,11 +115,12 @@ out/sh042/
 **Two GPU passes:**
 1. **Analysis** decodes the whole clip once:
    - faces (S3FD) → 68 landmarks (FAN) → eye regions;
-   - EyeGuard refines each iris and says whether an open eye with a visible designated reflection is present;
+   - the guard refines each iris and says whether an open eye with a visible designated reflection is present;
    - eyes are tracked across the clip, with cut detection and smoothing.
 2. **Render** decodes the clip again and, per eye and frame:
    - crops a 256 px, iris-scaled, rotated window;
-   - EyeGuard segments anatomy (iris, pupil, protected lids and lashes, reflection, clipped);
+   - the guard, GuardTX, a 57.5M-parameter transformer, segments anatomy (iris, pupil, protected lids and lashes,
+     reflection, clipped);
    - EyeRestoreTX, a 57.5M-parameter Restormer-style transformer, predicts the repaired pixels with support and
      confidence;
    - a conservative gate intersects the reflection with the visible eye surface, the track's validity and any
@@ -175,7 +171,7 @@ More: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Licence
 
-- **MIT:** EyeClean's code and documentation, and the released model weights (`eyeclean-r56b`, and `eyeclean-r56` / `eyeclean-r54` / `eyeclean-r48` before it).  See [LICENSE](LICENSE).
+- **MIT:** EyeClean's code and documentation, and the released model weights (`eyeclean-r57`, and `eyeclean-r56b` / `eyeclean-r56` / `eyeclean-r54` / `eyeclean-r48` before it).  See [LICENSE](LICENSE).
 - **GPL-3.0-or-later:** the Blender data-generation scripts (`blender/`), because they drive MPFB.
 - **Third-party assets and weights** carry their own terms: the face-detector weights, fetched at install; the iris
   dataset the model was trained on.  See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and

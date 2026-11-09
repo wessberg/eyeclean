@@ -25,7 +25,7 @@ Code: `io/video.py`, `io/exr.py`, `io/sequence.py`, `io/sidecar.py`, `color/tran
 
 Per frame:
 1. A detector proxy image goes to **S3FD** faces (up to 4), then **FAN** 68-point landmarks, giving eye regions.
-2. **EyeGuard refine** finds the iris centre and diameter, and scores the presence of an open eye and of a visible
+2. **Guard refine** finds the iris centre and diameter, and scores the presence of an open eye and of a visible
    designated reflection.
 3. A **cut detector** starts new shots.
 4. An **eye tracker** links eyes across frames.
@@ -45,8 +45,8 @@ For every tracked eye in the frame:
 |---|---|---|
 | crop | 256 × 256 px, K = 2.75 iris diameters wide, rotated to the eye's axis; bilinear from the reference | a resolution-independent view: the network always sees the eye at the same scale |
 | soften | the restorer's input only: the frame region is Gaussian-blurred by σ = 0.5 native px before sampling (`input_soften_sigma`) | removes aliasing that moves with sub-pixel eye motion.  It was the largest single source of frame-to-frame boil (docs/APPROACH.md) |
-| **EyeGuard** (1.8M) | U-Net: masks for ocular surface, iris, pupil, *protected* (lids, lashes, tear line), reflection, clipped; plus presence heads | knows what must never be edited, and where the reflection is |
-| presence | a small classifier on EyeGuard's features: is a *visible designated* reflection on this eye? | decides at eye level before any pixel is touched |
+| **guard**: GuardTX (57.5M) in `eyeclean-r57`; EyeGuard (1.8M U-Net) before | masks for ocular surface, iris, pupil, *protected* (lids, lashes, tear line), reflection, clipped; plus presence heads.  GuardTX is EyeRestoreTX's encoder-decoder with these heads (`model.guard_arch: "tx"`) | knows what must never be edited, and where the reflection is |
+| presence | a small classifier on the guard's input and masks: is a *visible designated* reflection on this eye? | decides at eye level before any pixel is touched |
 | **EyeRestoreTX** (57.5M) | Restormer-style transformer: channel attention (MDTA) + gated feed-forward (GDFN), U-shaped.  Outputs `residual`, `support`, `conf`, `synth` | predicts the repaired eye (the fill), where it wants to edit, and how sure it is |
 | gate | crop-space selection ∩ visible surface without protected pixels ∩ confidence ∩ the track's validity ∩ the user's `max_region` → warped to full resolution, eroded, thresholded → hard support **H** and a feather | conservative by construction: any failed condition gives an empty support, and the eye is reported `untouched` with a reason |
 | compositor | `out = ref + (strength · feather · H) ⊙ delta`, assigned only where H holds | writes nothing outside H |

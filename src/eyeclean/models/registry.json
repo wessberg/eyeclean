@@ -1,7 +1,18 @@
 {
  "schema": "eyeclean.models/1",
- "default": "eyeclean-r56b",
+ "default": "eyeclean-r57",
  "models": {
+  "eyeclean-r57": {
+   "file": "eyeclean-r57.safetensors",
+   "sha256": "e1ab7abbbe409d7a9f1815148fc00b337999e04c6c1de2bacf191c67cd2799bb",
+   "bytes": 461567428,
+   "restore_mode": "single",
+   "promoted": "2026-09-28",
+   "license": "MIT",
+   "url": null,
+   "description": "eyeclean-r56b with a transformer detector: GuardTX (57.5M, initialised from EyeRestoreTX) in place of the EyeGuard CNN (detects and removes more catchlight with less collateral; about 1.4-1.8x the time per eye); same presence classifier, EyeRestoreTX (57.5M) and gate; needs EyeClean 0.4.0 or later; see MODEL_CARD.md",
+   "input_note": "any input colour EyeClean supports; tested on 1080p Rec.709 video, linear Rec.709 EXR and phone JPEG photos"
+  },
   "eyeclean-r56b": {
    "file": "eyeclean-r56b.safetensors",
    "sha256": "b725366ef2ea3778631892bcbc67270dc09e99721f2ff1069a8a7978f27fa79d",

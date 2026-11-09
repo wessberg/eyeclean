@@ -37,7 +37,7 @@ uv run eyeclean models --fetch       # download the default model and verify its
 uv run eyeclean models               # where models are looked for, and which are installed
 ```
 
-- **Models:** `eyeclean models --fetch` puts the default model (`eyeclean-r56b.safetensors`) in the user model
+- **Models:** `eyeclean models --fetch` puts the default model (`eyeclean-r57.safetensors`) in the user model
   directory.  You can also download it yourself and put it in one of:
   - `$EYECLEAN_MODEL_DIR`;
   - `%LOCALAPPDATA%\eyeclean\models` (Windows) or `~/.local/share/eyeclean/models`;
@@ -106,7 +106,7 @@ eyeclean process --job shot.eyeclean.json --progress jsonl
 With `--progress jsonl`, stdout carries only JSON lines.  `--progress-file` writes the same stream to a file as well:
 
 ```text
-{"schema":"eyeclean.progress/1","event":"start","t":0.0,"input":"...","output":"...","model":{"name":"eyeclean-r56b","sha256":"b725...","restore_mode":"single"},"frames_expected":1200}
+{"schema":"eyeclean.progress/1","event":"start","t":0.0,"input":"...","output":"...","model":{"name":"eyeclean-r57","sha256":"e1ab...","restore_mode":"single"},"frames_expected":1200}
 {"schema":"eyeclean.progress/1","event":"stage","t":0.9,"stage":"analysis"}
 {"schema":"eyeclean.progress/1","event":"frame","t":1.1,"stage":"analysis","frame":0,"done":1,"total":1200}
 ...

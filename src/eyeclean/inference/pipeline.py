@@ -259,6 +259,12 @@ class Pipeline:
             # track hysteresis, the frame's own strict eye-level presence statistics
             with torch.autocast("cuda", dtype=torch.bfloat16):
                 out1 = self.b.restore_single(inp[None])
+            if self.gate.get("hole_source", "guard") == "union" and self.gate.get("restore_input", "source") == "source":
+                # the restorer's own support map joins the guard's reflection channel: the hole, the selection, the
+                # area test and the temporal union read the union; the restorer's input above is unchanged
+                probs = probs.clone()
+                probs[4] = torch.maximum(probs[4], torch.sigmoid(out1["support"][0, 0].float()))
+                hole = hole_mask(probs[None], float(self.gate.get("hole_refl_thresh", 0.5)), int(self.gate.get("hole_dilate_px", 2)))[0, 0]
             c1 = crop_support(probs, {k: v[0] for k, v in out1.items()}, "conservative", self.gate, refl_present=rp)
             stats = {"open": pres > self.gate["present_thresh"], "strict": bool(c1["reflection_present"]), "area": c1["area"],
                      "mean_corr": c1["mean_corr"]}

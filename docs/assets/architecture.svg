@@ -33,7 +33,7 @@
   <text x="306" y="212" text-anchor="middle" class="t">landmarks</text><text x="306" y="230" text-anchor="middle" class="s">FAN 68-point → eye ROIs</text>
   <path d="M386 221H418" class="l"/>
   <rect x="422" y="186" width="170" height="70" rx="10" class="net"/>
-  <text x="507" y="212" text-anchor="middle" class="t">EyeGuard refine</text><text x="507" y="230" text-anchor="middle" class="s">iris centre, diameter,</text><text x="507" y="244" text-anchor="middle" class="s">open-eye + reflection presence</text>
+  <text x="507" y="212" text-anchor="middle" class="t">Guard refine</text><text x="507" y="230" text-anchor="middle" class="s">iris centre, diameter,</text><text x="507" y="244" text-anchor="middle" class="s">open-eye + reflection presence</text>
   <path d="M592 221H624" class="l"/>
   <rect x="628" y="186" width="200" height="70" rx="10" class="box"/>
   <text x="728" y="212" text-anchor="middle" class="t">tracks + cuts</text><text x="728" y="230" text-anchor="middle" class="s">per-eye tracks, shot cuts,</text><text x="728" y="244" text-anchor="middle" class="s">smoothed over the clip</text>
@@ -44,7 +44,7 @@
   <text x="115" y="348" text-anchor="middle" class="t">eye crop</text><text x="115" y="366" text-anchor="middle" class="s">256 px, iris-scaled, rotated;</text><text x="115" y="380" text-anchor="middle" class="s">restorer input softened</text><text x="115" y="394" text-anchor="middle" class="s">0.5 native px</text>
   <path d="M200 364H232" class="l"/>
   <rect x="236" y="322" width="170" height="84" rx="10" class="net"/>
-  <text x="321" y="348" text-anchor="middle" class="t">EyeGuard masks</text><text x="321" y="366" text-anchor="middle" class="s">ocular · iris · pupil ·</text><text x="321" y="380" text-anchor="middle" class="s">protected (lids, lashes) ·</text><text x="321" y="394" text-anchor="middle" class="s">reflection · clipped</text>
+  <text x="321" y="348" text-anchor="middle" class="t">GuardTX masks</text><text x="321" y="366" text-anchor="middle" class="s">ocular · iris · pupil ·</text><text x="321" y="380" text-anchor="middle" class="s">protected (lids, lashes) ·</text><text x="321" y="394" text-anchor="middle" class="s">reflection · clipped</text>
   <path d="M406 364H438" class="l"/>
   <rect x="442" y="322" width="186" height="84" rx="10" class="net"/>
   <text x="535" y="348" text-anchor="middle" class="t">EyeRestoreTX</text><text x="535" y="366" text-anchor="middle" class="s">57.5M Restormer-style;</text><text x="535" y="380" text-anchor="middle" class="s">residual · support · conf ·</text><text x="535" y="394" text-anchor="middle" class="s">synth</text>

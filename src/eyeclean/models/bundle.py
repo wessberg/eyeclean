@@ -77,9 +77,17 @@ class Bundle:
         if retired:
             raise ValueError(f"{path}: uses {retired}, retired in EyeClean 0.3.0; use EyeClean <= 0.2 for this bundle")
         sd = load_file(str(path), device=str(device))
-        self.guard = EyeGuard(presence_head="guard.refl_ev.weight" in sd).to(device).eval()
-        self.guard.load_state_dict({k[6:]: v for k, v in sd.items() if k.startswith("guard.")})
         mcfg = self.manifest["model"]
+        # the guard slot: EyeGuard (the CNN every bundle before round 57 holds) or, with guard_arch "tx", GuardTX
+        guard_arch = mcfg.get("guard_arch", "cnn")
+        if guard_arch == "tx":
+            from .guard_tx import build_guard_tx
+            self.guard = build_guard_tx(mcfg.get("guard_tx"), checkpoint=False).to(device).eval()
+        elif guard_arch == "cnn":
+            self.guard = EyeGuard(presence_head="guard.refl_ev.weight" in sd).to(device).eval()
+        else:
+            raise ValueError(f"{path}: unknown guard_arch {guard_arch!r}")
+        self.guard.load_state_dict({k[6:]: v for k, v in sd.items() if k.startswith("guard.")})
         # the five-frame CNN restorer: only --restore-mode temporal runs it, so a bundle for single-frame use
         # may leave it out (the released model does)
         self.restore = None

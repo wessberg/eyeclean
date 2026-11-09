@@ -41,7 +41,9 @@ and pupil it covered.  Change nothing else.
 ## The model
 
 The architecture is described in [ARCHITECTURE.md](ARCHITECTURE.md).  In brief:
-- **EyeGuard**, a small U-Net, knows the anatomy: what is iris, pupil or lid, and what must never be edited.
+- **The guard** knows the anatomy: what is iris, pupil or lid, where the catchlight is, and what must never be
+  edited.  It was EyeGuard, a small U-Net; since `eyeclean-r57` it is GuardTX, a transformer with the restorer's
+  architecture, initialised from the restorer and trained to EyeGuard's outputs.
 - **EyeRestoreTX**, a Restormer-style transformer, makes the fill.  It replaced a CNN once the CNN's limits were
   measured rather than assumed.
 - **A conservative gate** decides where the fill may go.

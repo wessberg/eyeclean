@@ -62,6 +62,10 @@ DEFAULT_GATE = {
     # with the eye's mean colour and given as the reflection channel, models.inputs.hole_restore_input, and the
     # restorer's residual applies to the blanked crop).  A restorer must be trained for the input it is given.
     "restore_input": "source",
+    # Where the reflection channel comes from: "guard" (EyeGuard's probs[4]) or "union" (max with the restorer's own
+    # support map, whose single-frame output is already computed).  With "union" the hole, the selection, the area
+    # test and the temporal union read the union; the restorer's input is unchanged.  Source input only.
+    "hole_source": "guard",
     # Temporal union of the reflection channel over +-N frames of the same track (0 = off), warped into
     # the current crop.  Measured on the development shot: the per-frame gate switched the whole 50 px
     # fill on and off in runs of 6-15 frames while the eye was open (presence 0.2-0.3 on frames where the
